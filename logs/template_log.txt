@@ -1,0 +1,11 @@
+Name: [Team Member Name]
+Role / Module: [e.g., Agent Workspace]
+
+1. What I Added / Modified:
+   - [Brief description of UI screens or backend endpoints added]
+
+2. Files Modified / Created:
+   - [List key files, e.g., src/app/agent/page.jsx]
+
+3. How to Use / Test My Part:
+   - [Endpoints consumed or local route paths to view]

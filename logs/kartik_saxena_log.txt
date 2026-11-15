@@ -1,0 +1,38 @@
+=============================================================================
+DEVELOPER LOG: Kartik Saxena (Backend Lead / Database Architect)
+PROJECT: Helpdesk Ticketing System (HTS) - MVP Sprint
+DATE: November 15, 2026
+=============================================================================
+
+1. INFRASTRUCTURE & DATABASE INITIALIZATION:
+   - Successfully deployed the normalized 14-table MySQL 8 schema ('helpdesk_db').
+   - Configured secure connection pooling via 'mysql2' with environment variables.
+   - Initialized Node.js & Express server with CORS, dotenv, and bcrypt security.
+
+2. COMPLETED API ENDPOINTS:
+
+   A. AUTHENTICATION MODULE (FR-01, FR-02)
+      - Endpoint: POST /api/auth/register
+        * Description: Registers a new user with secure password hashing (bcrypt).
+        * Payload: { "name": "String", "email": "String", "password": "String", "phone": "String", "role_id": Number }
+        * Response: 201 Created ({ message, userId })
+
+      - Endpoint: POST /api/auth/login
+        * Description: Authenticates user credentials and returns user profile data.
+        * Payload: { "email": "String", "password": "String" }
+        * Response: 200 OK ({ message, user: { user_id, name, email, role_id, team_id } })
+
+   B. TICKET MANAGEMENT MODULE (FR-08, FR-09, FR-14)
+      - Endpoint: POST /api/tickets
+        * Description: Creates a new ticket, auto-generates a unique tracking number (HD-YYYY-######), maps the default team via category, and calculates SLA due timers.
+        * Payload: { "subject": "String", "description": "String", "category_id": Number, "priority": "String (Low/Medium/High/Critical)", "requester_id": Number }
+        * Response: 201 Created ({ message, ticketId, ticket_no })
+
+      - Endpoint: GET /api/tickets
+        * Description: Fetches all tickets with joined requester, team, and category names.
+        * Response: 200 OK (Array of ticket objects)
+
+3. TEAM INTEGRATION STATUS:
+   - Backend API is fully active locally at http://localhost:5000
+   - Frontend developers (Agni, Kani, Khus) can target http://localhost:5000/api for all login, registration, and ticket forms.
+=============================================================================
