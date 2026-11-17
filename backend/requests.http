@@ -1,0 +1,29 @@
+@host = http://localhost:5000
+@api = {{host}}/api
+
+### Health check
+GET {{host}}/
+
+### List tickets
+GET {{api}}/tickets
+
+### Log in (password for every demo user is Test@1234)
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "supervisor@helpdesk.local",
+  "password": "Test@1234"
+}
+
+### Create a ticket (requester id 4 = Demo Requester, category 1 = Network / IT)
+POST {{api}}/tickets
+Content-Type: application/json
+
+{
+  "subject": "Internet not working in C Block",
+  "description": "No connection since morning",
+  "category_id": 1,
+  "priority": "High",
+  "requester_id": 4
+}

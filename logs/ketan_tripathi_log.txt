@@ -1,0 +1,30 @@
+=============================================================================
+DEVELOPER LOG: Ketan Tripathi (Backend Logic & SLA Lead)
+PROJECT: Helpdesk Ticketing System (HTS) - MVP Sprint
+MODULE: Ticket workflow, assignment and SLA (Phase 2: Nov 17 - Nov 20)
+=============================================================================
+
+UPDATE 1 - November 17, 2026: Foundation
+
+1. What I Added / Modified:
+   - Fixed GET /api/tickets: the query was missing the SELECT keyword, so it returned a 500 error.
+   - Added a demo data script: teams, categories, business hours, holidays and demo users.
+   - Corrected the SLA resolution targets: Medium = 1620 min (3 business days) and Low = 2700 min (5 business days), based on a 9-hour business day.
+   - Added a business-hours calculator for SLA deadlines: Mon-Fri 09:00-18:00 IST, holidays skipped, 24x7 clock for Critical. Covered by 21 unit tests.
+   - Added backend/requests.http for testing the API from VS Code.
+
+2. Files Modified / Created:
+   - backend/controllers/ticketController.js (modified: SELECT fix in getTickets)
+   - backend/utils/businessTime.js (new)
+   - backend/tests/businessTime.test.js (new)
+   - backend/scripts/seedDemoData.js (new)
+   - backend/requests.http (new)
+   - backend/package.json (modified: "test" script now runs "node --test")
+
+3. How to Use / Test My Part:
+   - Load demo data once, after running schema.sql: in the backend folder run  node scripts/seedDemoData.js
+     Demo logins (password for all: Test@1234): supervisor@helpdesk.local, requester@helpdesk.local, agent.it1@helpdesk.local, agent.it2@helpdesk.local, plus one agent per other team.
+   - Run the unit tests: in the backend folder run  npm test  (21 tests pass).
+   - Try the API: open backend/requests.http in VS Code with the REST Client extension and click "Send Request".
+
+=============================================================================

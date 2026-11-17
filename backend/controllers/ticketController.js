@@ -75,6 +75,7 @@ exports.createTicket = async (req, res) => {
 exports.getTickets = async (req, res) => {
     try {
         const [tickets] = await db.query(`
+            SELECT
             T.ticket_id, T.ticket_no, T.subject, T.status, T.priority, 
             U.name AS requester_name, TM.team_name, C.name AS category_name, T.created_at
             FROM TICKET T
