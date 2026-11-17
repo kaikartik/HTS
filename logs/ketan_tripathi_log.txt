@@ -28,3 +28,37 @@ UPDATE 1 - November 17, 2026: Foundation
    - Try the API: open backend/requests.http in VS Code with the REST Client extension and click "Send Request".
 
 =============================================================================
+UPDATE 2 - November 17, 2026: Ticket creation with SLA dates + auto-assignment
+
+1. What I Added / Modified:
+   - POST /api/tickets now works out response_due and resolution_due in business hours (Mon-Fri 09:00-18:00 IST, holidays skipped; Critical tickets run 24x7).
+   - Ticket numbers (HD-YYYY-######) are now built from the new ticket id, so they can never repeat.
+   - Auto-assignment: category -> team, then the agent of that team with the fewest open tickets (ties go to the agent assigned longest ago). Status moves New -> Open. If the team has no active agent the ticket stays New and supervisors are notified.
+   - Priority can be sent directly, or worked out from impact x urgency (FR-14).
+   - Every change is saved in TICKET_HISTORY and the agent gets an in-app notification (NOTIFICATIONS table).
+   - GET /api/tickets now supports filters and returns the SLA status. GET /api/tickets/:id is new and returns the ticket with its history.
+   - An unknown priority is now rejected with 400 (before, it silently used the Critical SLA).
+
+2. Files Modified / Created:
+   - backend/controllers/ticketController.js (rewritten: createTicket, getTickets, getTicketById)
+   - backend/routes/ticketRoutes.js (added GET /:id)
+   - backend/utils/priority.js, backend/utils/sla.js (new)
+   - backend/services/auditService.js, slaService.js, assignmentService.js (new)
+   - backend/tests/priority.test.js, sla.test.js, assignment.test.js (new)
+
+3. How to Use / Test My Part:
+   POST /api/tickets
+     Payload: { "subject", "description", "category_id", "requester_id", "priority": "Low|Medium|High|Critical" (default Medium) OR "impact" + "urgency" ("Low|Medium|High" each), "channel" (optional, default "Portal") }
+     Response 201: { message, ticketId, ticket_no, status, priority, team_id, assignee_id, response_due, resolution_due }
+     Errors: 400 missing or invalid fields, 404 unknown category or requester.
+
+   GET /api/tickets
+     Optional filters: status, priority, assignee_id, requester_id, team_id, q (search in ticket number and subject).
+     Each ticket has: ticket_id, ticket_no, subject, description, status, priority, channel, requester_id, requester_name, assignee_id, assignee_name, team_id, team_name, category_id, category_name, created_at, first_response_at, resolved_at, closed_at, response_due, resolution_due, hold_started_at, is_breached, escalated_at, sla_status, sla_timer, sla_percent.
+     sla_status is "ok", "warning" (75% of the time used), "breached", "paused" (On Hold) or "met". Use it for the colour badge. sla_timer is "response" until the first reply, then "resolution".
+
+   GET /api/tickets/:id
+     Same fields as above plus history: [{ history_id, field_name, old_value, new_value, changed_at, changed_by_name }]
+
+   Note: all dates are sent in UTC (ending in Z). India time = UTC + 5:30.
+   Run the unit tests: npm test (in the backend folder).

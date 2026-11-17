@@ -27,3 +27,36 @@ Content-Type: application/json
   "priority": "High",
   "requester_id": 4
 }
+### Create: IT ticket, High priority (goes to an IT agent, status Open)
+POST {{api}}/tickets
+Content-Type: application/json
+
+{
+  "subject": "Internet not working in C Block",
+  "description": "No connection since morning",
+  "category_id": 1,
+  "priority": "High",
+  "requester_id": 4
+}
+
+### Create: Electrical ticket, priority from impact x urgency (High + High = Critical, 24x7 clock)
+POST {{api}}/tickets
+Content-Type: application/json
+
+{
+  "subject": "Power cut in the lab",
+  "description": "Whole lab has no power",
+  "category_id": 2,
+  "impact": "High",
+  "urgency": "High",
+  "requester_id": 4
+}
+
+### One ticket with its history (change the 1 to your ticket id)
+GET {{api}}/tickets/1
+
+### Filter: open tickets of IT agent one (user 6)
+GET {{api}}/tickets?assignee_id=6&status=Open
+
+### Search by number or subject
+GET {{api}}/tickets?q=internet
