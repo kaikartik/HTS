@@ -10,6 +10,7 @@ Date: 18 Nov 2026
    - Portal shell and Home dashboard: ticket counters, quick actions, recent tickets table
    - Reusable components: AuthLayout, TextField, PasswordInput, PrimaryButton, StatusBadge, PriorityBadge
    - Raise a Ticket form: category/sub-category, impact and urgency with calculated priority, attachment upload with type/size validation (10 MB), KB suggestions, success screen with ticket number
+   - My Tickets list with URL-persisted search, combined filters, sorting, responsive layout and pagination; ticket detail page with not-found handling
    - Mock API layer in _lib/requesterApi.ts so real backend APIs can be swapped in on 26 Nov
 
 2. Files Modified / Created:
@@ -18,14 +19,17 @@ Date: 18 Nov 2026
    - frontend/src/app/requester-agni/_lib/categories.ts
    - frontend/src/app/requester-agni/_lib/mockKb.ts
    - frontend/src/app/requester-agni/_lib/types.ts
+   - frontend/src/app/requester-agni/(portal)/tickets/page.tsx
+   - frontend/src/app/requester-agni/(portal)/tickets/[id]/page.tsx
 
 3. How to Use / Test My Part:
    - Open /requester-agni/login and sign in to access the requester portal
    - Use Raise a ticket from the Home page or sidebar to submit a support request
+   - Open /requester-agni/tickets to search, filter and sort; open a ticket number or subject for details
    - Ticket data is mocked and saved in localStorage; Home counters and recent tickets include created tickets
 
 Pending:
-- My Tickets and ticket detail, Knowledge Base search and article pages, final API integration, testing
+- Knowledge Base search and article pages, final API integration, testing
 
 Questions / blockers for the team:
 - Need API.md with endpoints, JSON shapes and the login/token approach

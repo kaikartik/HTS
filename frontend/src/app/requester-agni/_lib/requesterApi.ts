@@ -101,6 +101,11 @@ export async function getMyTickets(): Promise<Ticket[]> {
   return getAllTickets();
 }
 
+export async function getTicket(id: string): Promise<Ticket | null> {
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  return getAllTickets().find((ticket) => ticket.id === id) ?? null;
+}
+
 export function searchKb(query: string): KnowledgeBaseArticle[] {
   const stopWords = new Set(["a", "an", "and", "at", "for", "from", "help", "in", "is", "it", "my", "of", "on", "the", "to", "with"]);
   const terms = (query.toLocaleLowerCase().match(/[a-z0-9]+/g) ?? []).filter((term) => !stopWords.has(term));
