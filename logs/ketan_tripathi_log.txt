@@ -62,3 +62,50 @@ UPDATE 2 - November 17, 2026: Ticket creation with SLA dates + auto-assignment
 
    Note: all dates are sent in UTC (ending in Z). India time = UTC + 5:30.
    Run the unit tests: npm test (in the backend folder).
+
+   =============================================================================
+   UPDATE 3 - November XX, 2026: Status workflow, SLA pause on hold, manual assignment
+
+1. What I Added / Modified:
+   - PATCH /api/tickets/:id/status moves a ticket along the SRS life cycle: New -> Open -> In Progress <-> On Hold -> Resolved -> Closed, plus Reopened. A step that is not in the diagram is refused (409), a user who may not do it is refused (403).
+   - On Hold stops the SLA clock. When the ticket goes back to In Progress, the due dates move back by the business time spent on hold.
+   - The first move to In Progress counts as the first response. A late first response, or a late resolution, marks the ticket as breached (is_breached) and notifies the supervisors.
+   - A Resolved ticket can be reopened for 7 days (the resolution clock starts again) or closed. Closed is final.
+   - A supervisor can assign / re-assign a ticket to an agent, and auto-assign a ticket that has no agent yet.
+   - Every change is saved in TICKET_HISTORY and creates in-app notifications.
+   - Who is calling: for now every workflow call must send the logged-in user's id in the header  x-user-id  (the login response has user_id). This will change to a token when JWT is added; only backend/utils/actor.js will change.
+
+2. Files Modified / Created:
+   - backend/utils/transitions.js, http.js, actor.js (new)
+   - backend/utils/sla.js (modified: computeResumeDates added)
+   - backend/services/workflowService.js, escalationService.js (new)
+   - backend/controllers/workflowController.js (new)
+   - backend/routes/ticketRoutes.js (modified: workflow routes added)
+   - backend/tests/transitions.test.js, slaPause.test.js (new)
+
+3. How to Use / Test My Part:
+   Header on every call below:  x-user-id: <user_id of the logged-in user>
+
+   GET /api/tickets/:id/transitions
+     -> { ticket_id, status, allowed: ["In Progress", ...] }   (show only these buttons for this user)
+
+   PATCH /api/tickets/:id/status
+     Body: { "status": "In Progress", "reason": "optional text" }
+     Response 200: { message, ticket_id, ticket_no, from, to }
+     Errors: 400 missing/unknown status, 401 missing or unknown user, 403 this user may not do it, 404 no such ticket, 409 step not allowed.
+     Who can do what:
+       Open -> In Progress:            the assigned Agent, Supervisor, Admin
+       In Progress -> On Hold:         the assigned Agent, Supervisor, Admin
+       In Progress -> Resolved:        the assigned Agent, Supervisor, Admin
+       On Hold -> In Progress:         the assigned Agent, Supervisor, Admin, or the Requester (information received)
+       Resolved -> Closed:             the Requester (confirms), Supervisor, Admin (the system also closes after 7 days)
+       Resolved -> Reopened:           the Requester, Supervisor, Admin, within 7 days of resolving
+       Reopened -> In Progress:        the assigned Agent, Supervisor, Admin
+
+   POST /api/tickets/:id/assign          (Supervisor or Admin)
+     Body: { "assignee_id": 7 }  -> 200 { message, ticket_id, assignee_id, status }
+   POST /api/tickets/:id/auto-assign     (Supervisor or Admin, only for a ticket without an agent)
+     -> 200 { message, ticket_id, assignee_id, status }
+
+   Notes: sla_status in GET /api/tickets becomes "paused" while On Hold and "met" when resolved in time.
+   Run the unit tests: npm test (in the backend folder).

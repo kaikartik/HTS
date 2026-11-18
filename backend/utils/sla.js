@@ -11,6 +11,21 @@ function computeDueDates(createdAt, sla, calendar) {
   };
 }
 
+// A ticket leaves On Hold: its SLA clock was stopped, so the due times move back by the
+// business time spent on hold. Needs ticket.hold_started_at, first_response_at, response_due, resolution_due.
+function computeResumeDates(ticket, calendar, now = new Date()) {
+  const heldMinutes = ticket.hold_started_at
+    ? Math.round(businessMinutesBetween(ticket.hold_started_at, now, calendar) * 60) / 60 // whole seconds
+    : 0;
+  const push = (due) => addBusinessMinutes(due, heldMinutes, calendar);
+  return {
+    held_minutes: heldMinutes,
+    // the response clock only matters until the first response has been given
+    response_due: ticket.first_response_at ? ticket.response_due : push(ticket.response_due),
+    resolution_due: push(ticket.resolution_due),
+  };
+}
+
 // Where a ticket stands against its SLA right now.
 //   ticket: { status, is_breached, first_response_at, response_due, resolution_due, hold_started_at }
 //   sla:    { response_mins, resolution_mins }
@@ -40,4 +55,4 @@ function computeSlaStatus(ticket, sla, calendar, now = new Date()) {
   return { sla_status: used >= 0.75 - 1e-9 ? 'warning' : 'ok', sla_timer: timer, sla_percent: percent };
 }
 
-module.exports = { computeDueDates, computeSlaStatus };
+module.exports = { computeDueDates, computeResumeDates, computeSlaStatus };

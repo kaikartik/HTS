@@ -1,5 +1,9 @@
 @host = http://localhost:5000
 @api = {{host}}/api
+@ticket = 1
+@requester = 4
+@agent = 6
+@supervisor = 3
 
 ### Health check
 GET {{host}}/
@@ -60,3 +64,83 @@ GET {{api}}/tickets?assignee_id=6&status=Open
 
 ### Search by number or subject
 GET {{api}}/tickets?q=internet
+### What can this user do next on the ticket? (change @agent to try other users)
+GET {{api}}/tickets/{{ticket}}/transitions
+x-user-id: {{agent}}
+
+### Agent starts work: Open -> In Progress (counts as the first response)
+PATCH {{api}}/tickets/{{ticket}}/status
+Content-Type: application/json
+x-user-id: {{agent}}
+
+{
+  "status": "In Progress"
+}
+
+### Agent puts the ticket on hold (SLA clock stops)
+PATCH {{api}}/tickets/{{ticket}}/status
+Content-Type: application/json
+x-user-id: {{agent}}
+
+{
+  "status": "On Hold",
+  "reason": "Waiting for the requester's screenshot"
+}
+
+### Requester replies: On Hold -> In Progress (SLA clock starts again)
+PATCH {{api}}/tickets/{{ticket}}/status
+Content-Type: application/json
+x-user-id: {{requester}}
+
+{
+  "status": "In Progress"
+}
+
+### Agent resolves the ticket
+PATCH {{api}}/tickets/{{ticket}}/status
+Content-Type: application/json
+x-user-id: {{agent}}
+
+{
+  "status": "Resolved"
+}
+
+### Requester is not happy: reopen (allowed for 7 days)
+PATCH {{api}}/tickets/{{ticket}}/status
+Content-Type: application/json
+x-user-id: {{requester}}
+
+{
+  "status": "Reopened"
+}
+
+### Requester confirms: close (only from Resolved)
+PATCH {{api}}/tickets/{{ticket}}/status
+Content-Type: application/json
+x-user-id: {{requester}}
+
+{
+  "status": "Closed"
+}
+
+### Should FAIL with 403: the requester tries to resolve
+PATCH {{api}}/tickets/{{ticket}}/status
+Content-Type: application/json
+x-user-id: {{requester}}
+
+{
+  "status": "Resolved"
+}
+
+### Supervisor assigns / re-assigns the ticket to agent 7
+POST {{api}}/tickets/{{ticket}}/assign
+Content-Type: application/json
+x-user-id: {{supervisor}}
+
+{
+  "assignee_id": 7
+}
+
+### Supervisor: auto-assign a ticket that has no agent yet
+POST {{api}}/tickets/{{ticket}}/auto-assign
+x-user-id: {{supervisor}}
