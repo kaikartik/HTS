@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import AuthLayout from "../_components/AuthLayout";
+import PasswordInput from "../_components/PasswordInput";
+import PrimaryButton from "../_components/PrimaryButton";
+import TextField from "../_components/TextField";
 import { register } from "../_lib/requesterApi";
-import { themeClasses } from "../_lib/theme";
 
 type FormErrors = {
   name?: string;
@@ -12,9 +14,11 @@ type FormErrors = {
   confirmPassword?: string;
 };
 
-const inputClassName = "min-h-12 w-full rounded-md border border-[#D9E2EF] bg-white px-3.5 text-base text-[#0F1F33] outline-none transition placeholder:text-[#5B6B80] hover:border-[#00448E]/50 focus-visible:border-[#00448E] focus-visible:ring-2 focus-visible:ring-[#00448E]/25 aria-invalid:border-[#b33b38] aria-invalid:focus-visible:ring-[#b33b38]/20";
-
 export default function RequesterRegisterPage() {
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,7 +59,13 @@ export default function RequesterRegisterPage() {
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) {
+      if (nextErrors.name) nameRef.current?.focus();
+      else if (nextErrors.email) emailRef.current?.focus();
+      else if (nextErrors.password) passwordRef.current?.focus();
+      else confirmPasswordRef.current?.focus();
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -66,72 +76,35 @@ export default function RequesterRegisterPage() {
     }
   }
 
-  if (isRegistered) {
-    return (
-      <main className={`min-h-screen ${themeClasses.page} sm:flex sm:items-center sm:justify-center sm:p-8`}>
-        <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#FFFFFF] shadow-[0_24px_80px_rgba(15,31,51,0.12)] sm:min-h-0 sm:flex-row sm:overflow-hidden sm:rounded-[10px]">
-          <AuthLayout />
-          <section className="flex flex-1 items-center px-6 py-10 sm:px-12 sm:py-14 lg:px-16">
-            <div className="mx-auto w-full max-w-sm">
-              <p className="text-sm font-medium text-[#00448E]">Almost there</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F1F33] sm:text-[1.8rem]">Check your email to verify your account</h2>
-              <p className="mt-3 text-sm leading-6 text-[#5B6B80]">We sent a verification link to {email.trim()}.</p>
-              <a href="/requester-agni/login" className={`mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-md px-4 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 ${themeClasses.primaryButton} ${themeClasses.focusOutline}`}>Back to sign in</a>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className={`min-h-screen ${themeClasses.page} sm:flex sm:items-center sm:justify-center sm:p-8`}>
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#FFFFFF] shadow-[0_24px_80px_rgba(15,31,51,0.12)] sm:min-h-0 sm:flex-row sm:overflow-hidden sm:rounded-[10px]">
-        <AuthLayout />
-        <section className="flex flex-1 items-center px-6 py-10 sm:px-12 sm:py-14 lg:px-16">
-          <div className="mx-auto w-full max-w-sm">
+    <AuthLayout>
+      {isRegistered ? (
+        <>
+          <p className="text-sm font-medium text-[#00448E]">Almost there</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F1F33] md:text-[1.8rem]">Check your email to verify your account</h1>
+          <p className="mt-3 text-sm leading-6 text-[#5B6B80]">We sent a verification link to {email.trim()}.</p>
+          <a href="/requester-agni/login" className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#00448E] px-4 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,68,142,0.16)] transition hover:bg-[#003470] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">Back to sign in</a>
+        </>
+      ) : (
+        <>
             <p className="text-sm font-medium text-[#00448E]">Get started</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F1F33] sm:text-[1.8rem]">Create your account</h2>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#0F1F33] md:text-[1.8rem]">Create your account</h1>
             <p className="mt-2 text-sm leading-6 text-[#5B6B80]">Register to manage your requests and get support.</p>
 
-            <form className="mt-7 space-y-4" noValidate onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="name" className="mb-2 block text-sm font-medium text-[#0F1F33]">Full name</label>
-                <input id="name" name="name" type="text" autoComplete="name" value={name} onChange={(event) => { setName(event.target.value); if (errors.name) setErrors((current) => ({ ...current, name: undefined })); }} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? "name-error" : undefined} className={inputClassName} placeholder="Your name" />
-                {errors.name && <p id="name-error" className="mt-1.5 text-sm text-[#a52d2a]" role="alert">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#0F1F33]">Email address</label>
-                <input id="email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => { setEmail(event.target.value); if (errors.email) setErrors((current) => ({ ...current, email: undefined })); }} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? "email-error" : undefined} className={inputClassName} placeholder="you@example.com" />
-                {errors.email && <p id="email-error" className="mt-1.5 text-sm text-[#a52d2a]" role="alert">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="password" className="mb-2 block text-sm font-medium text-[#0F1F33]">Password</label>
-                <input id="password" name="password" type="password" autoComplete="new-password" value={password} onChange={(event) => { setPassword(event.target.value); if (errors.password) setErrors((current) => ({ ...current, password: undefined })); }} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? "password-error" : undefined} className={inputClassName} placeholder="Create a secure password" />
-                {errors.password && <p id="password-error" className="mt-1.5 text-sm text-[#a52d2a]" role="alert">{errors.password}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="confirm-password" className="mb-2 block text-sm font-medium text-[#0F1F33]">Confirm password</label>
-                <input id="confirm-password" name="confirm-password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => { setConfirmPassword(event.target.value); if (errors.confirmPassword) setErrors((current) => ({ ...current, confirmPassword: undefined })); }} aria-invalid={Boolean(errors.confirmPassword)} aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined} className={inputClassName} placeholder="Re-enter your password" />
-                {errors.confirmPassword && <p id="confirm-password-error" className="mt-1.5 text-sm text-[#a52d2a]" role="alert">{errors.confirmPassword}</p>}
-              </div>
-
-              <button type="submit" disabled={isLoading} className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 ${themeClasses.primaryButton} ${themeClasses.focusOutline} disabled:cursor-wait disabled:bg-[#5B6B80]`}>
-                {isLoading && <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
-                {isLoading ? "Creating account..." : "Create account"}
-              </button>
+            <form className="mt-6 space-y-4" noValidate onSubmit={handleSubmit}>
+              <TextField id="name" name="name" label="Full name" autoComplete="name" inputRef={nameRef} value={name} error={errors.name} placeholder="Your name" required onChange={(event) => { setName(event.target.value); if (errors.name) setErrors((current) => ({ ...current, name: undefined })); }} />
+              <TextField id="email" name="email" label="Email address" type="email" inputMode="email" autoComplete="email" inputRef={emailRef} value={email} error={errors.email} placeholder="you@example.com" required onChange={(event) => { setEmail(event.target.value); if (errors.email) setErrors((current) => ({ ...current, email: undefined })); }} />
+              <PasswordInput id="password" name="password" label="Password" autoComplete="new-password" inputRef={passwordRef} value={password} error={errors.password} hint="At least 8 characters with uppercase, lowercase, and a number." placeholder="Create a secure password" required onChange={(event) => { setPassword(event.target.value); if (errors.password) setErrors((current) => ({ ...current, password: undefined })); }} />
+              <PasswordInput id="confirm-password" name="confirm-password" label="Confirm password" autoComplete="new-password" inputRef={confirmPasswordRef} value={confirmPassword} error={errors.confirmPassword} placeholder="Re-enter your password" required onChange={(event) => { setConfirmPassword(event.target.value); if (errors.confirmPassword) setErrors((current) => ({ ...current, confirmPassword: undefined })); }} />
+              <PrimaryButton isLoading={isLoading}>Create account</PrimaryButton>
             </form>
 
-            <p className="mt-6 text-center text-sm text-[#5B6B80]">
+            <p className="mt-5 text-center text-sm text-[#5B6B80]">
               Already have an account?{" "}
               <a href="/requester-agni/login" className="font-semibold text-[#00448E] underline decoration-transparent underline-offset-4 hover:decoration-current focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">Sign in</a>
             </p>
-          </div>
-        </section>
-      </div>
-    </main>
+        </>
+      )}
+    </AuthLayout>
   );
 }

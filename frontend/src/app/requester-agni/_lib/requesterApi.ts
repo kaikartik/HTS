@@ -33,6 +33,20 @@ export async function register(credentials: RegisterCredentials): Promise<LoginR
   return { email: credentials.email };
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  void email;
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  void newPassword;
+
+  if (!token.trim() || token === "expired") {
+    throw new Error("This reset link has expired or is invalid");
+  }
+}
+
 export function getRequesterUser(): RequesterUser | null {
   const storedUser = window.localStorage.getItem(REQUESTER_USER_KEY);
   if (!storedUser) return null;
