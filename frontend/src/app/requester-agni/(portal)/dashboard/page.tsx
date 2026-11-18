@@ -147,8 +147,8 @@ export default function RequesterDashboardPage() {
                 <tbody className="divide-y divide-[#D9E2EF]">
                   {recentTickets.map((ticket) => (
                     <tr key={ticket.id} className="transition-colors hover:bg-[#F4F7FB]">
-                      <td className="truncate px-4 py-4 text-sm font-medium text-[#00448E]">{ticket.ticketNo}</td>
-                      <td className="truncate px-4 py-4 text-sm font-medium text-[#0F1F33]">{ticket.subject}</td>
+                      <td className="truncate px-4 py-4 text-sm font-medium text-[#00448E]"><Link href={`/requester-agni/tickets/${ticket.id}`} className="hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">{ticket.ticketNo}</Link></td>
+                      <td className="truncate px-4 py-4 text-sm font-medium text-[#0F1F33]"><Link href={`/requester-agni/tickets/${ticket.id}`} className="hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">{ticket.subject}</Link></td>
                       <td className="px-4 py-4"><StatusBadge status={ticket.status} /></td>
                       <td className="px-4 py-4"><PriorityBadge priority={ticket.priority} /></td>
                       <td className="whitespace-nowrap px-4 py-4 text-sm text-[#5B6B80]">{formatCreatedDate(ticket.createdAt)}</td>
@@ -162,10 +162,10 @@ export default function RequesterDashboardPage() {
               {recentTickets.map((ticket) => (
                 <article key={ticket.id} className="rounded-md border border-[#D9E2EF] bg-[#FFFFFF] p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="truncate text-xs font-semibold text-[#00448E]">{ticket.ticketNo}</p>
+                    <Link href={`/requester-agni/tickets/${ticket.id}`} className="truncate text-xs font-semibold text-[#00448E] hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">{ticket.ticketNo}</Link>
                     <time dateTime={ticket.createdAt} className="shrink-0 text-xs text-[#5B6B80]">{formatCreatedDate(ticket.createdAt)}</time>
                   </div>
-                  <h3 className="mt-2 text-sm font-semibold leading-5 text-[#0F1F33]">{ticket.subject}</h3>
+                  <h3 className="mt-2 text-sm font-semibold leading-5 text-[#0F1F33]"><Link href={`/requester-agni/tickets/${ticket.id}`} className="break-words hover:text-[#00448E] hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">{ticket.subject}</Link></h3>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <StatusBadge status={ticket.status} />
                     <PriorityBadge priority={ticket.priority} />

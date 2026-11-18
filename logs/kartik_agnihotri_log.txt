@@ -13,6 +13,7 @@ Date: 18 Nov 2026
    - My Tickets list with URL-persisted search, combined filters, sorting, responsive layout and pagination; ticket detail page with not-found handling
    - Mock API layer in _lib/requesterApi.ts so real backend APIs can be swapped in on 26 Nov
    - 18 Nov 2026: Ticket detail page: added status history timeline, public conversation thread and reply box (internal notes hidden from requesters), closed-ticket handling, and mock data for history/replies. Pending: Knowledge Base pages, reopen ticket and CSAT rating, API integration.
+   - 18 Nov 2026: Knowledge Base: added KB search page with category filters, article page with 1-5 star helpful rating, published-only articles (drafts hidden), links from ticket form suggestions, and linked dashboard recent tickets to ticket detail pages. Pending: reopen ticket and CSAT rating, API integration, final testing.
 
 2. Files Modified / Created:
    - frontend/src/app/requester-agni/

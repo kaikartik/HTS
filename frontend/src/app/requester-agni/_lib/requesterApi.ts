@@ -18,6 +18,7 @@ export type RequesterUser = {
 
 const REQUESTER_USER_KEY = "requester-agni-user";
 const CREATED_TICKETS_KEY = "requester-agni-created-tickets";
+const KB_RATINGS_KEY = "requester-agni-kb-ratings";
 
 export type CreateTicketData = {
   subject: string;
@@ -148,12 +149,47 @@ export async function addReply(ticketId: string, body: string): Promise<TicketRe
   return reply;
 }
 
-export function searchKb(query: string): KnowledgeBaseArticle[] {
+export async function listKbArticles(): Promise<KnowledgeBaseArticle[]> {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  return mockKbArticles.filter((article) => article.status === "Published");
+}
+
+export async function getKbArticle(id: string): Promise<KnowledgeBaseArticle | null> {
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  const article = mockKbArticles.find((entry) => entry.id === id);
+  return article?.status === "Published" ? article : null;
+}
+
+export async function rateKbArticle(id: string, rating: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    throw new Error("Choose a rating from 1 to 5 stars.");
+  }
+  if (!mockKbArticles.some((article) => article.id === id && article.status === "Published")) {
+    throw new Error("This article could not be found.");
+  }
+
+  const ratings = readKbRatings();
+  ratings[id] = rating;
+  try {
+    window.localStorage.setItem(KB_RATINGS_KEY, JSON.stringify(ratings));
+  } catch {
+    throw new Error("Your feedback could not be saved in this browser. Please try again.");
+  }
+}
+
+export function getKbRating(id: string): number | null {
+  if (!mockKbArticles.some((article) => article.id === id && article.status === "Published")) return null;
+  return readKbRatings()[id] ?? null;
+}
+
+export function searchKb(query: string, limit = 3): KnowledgeBaseArticle[] {
   const stopWords = new Set(["a", "an", "and", "at", "for", "from", "help", "in", "is", "it", "my", "of", "on", "the", "to", "with"]);
   const terms = (query.toLocaleLowerCase().match(/[a-z0-9]+/g) ?? []).filter((term) => !stopWords.has(term));
   if (!terms.length) return [];
 
   return mockKbArticles
+    .filter((article) => article.status === "Published")
     .map((article) => {
       const tokenize = (value: string): string[] => {
         const matches = value.toLocaleLowerCase().match(/[a-z0-9]+/g);
@@ -174,7 +210,7 @@ export function searchKb(query: string): KnowledgeBaseArticle[] {
     })
     .filter(({ score }) => score > 0)
     .sort((first, second) => second.score - first.score)
-    .slice(0, 3)
+    .slice(0, Math.max(0, limit))
     .map(({ article }) => article);
 }
 
@@ -250,6 +286,28 @@ function readCreatedTickets(): Ticket[] {
   }
 
   return [];
+}
+
+function readKbRatings(): Record<string, number> {
+  try {
+    const stored = window.localStorage.getItem(KB_RATINGS_KEY);
+    if (!stored) return {};
+
+    const parsed: unknown = JSON.parse(stored);
+    if (isKbRatings(parsed)) return parsed;
+    console.error("Stored Knowledge Base ratings have an invalid format.");
+  } catch (error) {
+    console.error("Could not read stored Knowledge Base ratings.", error);
+  }
+
+  return {};
+}
+
+function isKbRatings(value: unknown): value is Record<string, number> {
+  return typeof value === "object"
+    && value !== null
+    && !Array.isArray(value)
+    && Object.values(value).every((rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5);
 }
 
 function isTicket(value: unknown): value is Ticket {
