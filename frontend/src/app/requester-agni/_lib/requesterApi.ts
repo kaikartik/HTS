@@ -1,5 +1,6 @@
 import { mockTickets } from "./mockData";
-import type { DashboardStats, Ticket } from "./types";
+import { mockKbArticles, type KnowledgeBaseArticle } from "./mockKb";
+import type { DashboardStats, Ticket, TicketImpact, TicketPriority } from "./types";
 
 export type LoginCredentials = {
   email: string;
@@ -16,6 +17,22 @@ export type RequesterUser = {
 };
 
 const REQUESTER_USER_KEY = "requester-agni-user";
+const CREATED_TICKETS_KEY = "requester-agni-created-tickets";
+
+export type CreateTicketData = {
+  subject: string;
+  description: string;
+  category: string;
+  subCategory: string;
+  impact: TicketImpact;
+  urgency: TicketImpact;
+  priority: TicketPriority;
+  employeeId: string;
+  department: string;
+  phone: string;
+  location: string;
+  attachments: string[];
+};
 
 export type RegisterCredentials = {
   name: string;
@@ -70,15 +87,119 @@ export function clearRequesterUser(): void {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   await new Promise((resolve) => setTimeout(resolve, 250));
+  const tickets = await getAllTickets();
   return {
-    total: mockTickets.length,
-    open: mockTickets.filter((ticket) => ticket.status === "New" || ticket.status === "Open").length,
-    inProgress: mockTickets.filter((ticket) => ticket.status === "In Progress").length,
-    resolved: mockTickets.filter((ticket) => ticket.status === "Resolved").length,
+    total: tickets.length,
+    open: tickets.filter((ticket) => ticket.status === "New" || ticket.status === "Open").length,
+    inProgress: tickets.filter((ticket) => ticket.status === "In Progress").length,
+    resolved: tickets.filter((ticket) => ticket.status === "Resolved").length,
   };
 }
 
 export async function getMyTickets(): Promise<Ticket[]> {
   await new Promise((resolve) => setTimeout(resolve, 250));
-  return [...mockTickets].sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
+  return getAllTickets();
+}
+
+export function searchKb(query: string): KnowledgeBaseArticle[] {
+  const stopWords = new Set(["a", "an", "and", "at", "for", "from", "help", "in", "is", "it", "my", "of", "on", "the", "to", "with"]);
+  const terms = (query.toLocaleLowerCase().match(/[a-z0-9]+/g) ?? []).filter((term) => !stopWords.has(term));
+  if (!terms.length) return [];
+
+  return mockKbArticles
+    .map((article) => {
+      const tokenize = (value: string): string[] => {
+        const matches = value.toLocaleLowerCase().match(/[a-z0-9]+/g);
+        return matches ? Array.from(matches) : [];
+      };
+      const title = tokenize(article.title);
+      const tags = tokenize(article.tags.join(" "));
+      const category = tokenize(article.category);
+      const summary = tokenize(article.summary);
+      const content = tokenize(article.content);
+      const score = terms.reduce((total, term) => total
+        + (title.includes(term) ? 4 : 0)
+        + (tags.includes(term) ? 4 : 0)
+        + (category.includes(term) ? 2 : 0)
+        + (summary.includes(term) ? 2 : 0)
+        + (content.includes(term) ? 1 : 0), 0);
+      return { article, score };
+    })
+    .filter(({ score }) => score > 0)
+    .sort((first, second) => second.score - first.score)
+    .slice(0, 3)
+    .map(({ article }) => article);
+}
+
+export async function createTicket(data: CreateTicketData): Promise<Ticket> {
+  await new Promise((resolve) => setTimeout(resolve, 600));
+
+  const tickets = getAllTickets();
+  const nextNumber = tickets.reduce((highest, ticket) => {
+    const match = /HD-\d{4}-(\d+)$/.exec(ticket.ticketNo);
+    return match ? Math.max(highest, Number(match[1])) : highest;
+  }, 0) + 1;
+  const timestamp = new Date().toISOString();
+  const ticket: Ticket = {
+    id: `ticket-${nextNumber}`,
+    ticketNo: `HD-2026-${String(nextNumber).padStart(6, "0")}`,
+    subject: data.subject,
+    description: data.description,
+    category: data.category,
+    subCategory: data.subCategory,
+    status: "New",
+    priority: data.priority,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    impact: data.impact,
+    urgency: data.urgency,
+    employeeId: data.employeeId,
+    department: data.department,
+    phone: data.phone,
+    location: data.location,
+    attachments: data.attachments,
+  };
+  const createdTickets = [...readCreatedTickets(), ticket];
+
+  try {
+    window.localStorage.setItem(CREATED_TICKETS_KEY, JSON.stringify(createdTickets));
+  } catch {
+    throw new Error("Your ticket could not be saved in this browser. Please try again.");
+  }
+
+  return ticket;
+}
+
+function getAllTickets(): Ticket[] {
+  return [...mockTickets, ...readCreatedTickets()].sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
+}
+
+function readCreatedTickets(): Ticket[] {
+  try {
+    const stored = window.localStorage.getItem(CREATED_TICKETS_KEY);
+    if (!stored) return [];
+
+    const parsed: unknown = JSON.parse(stored);
+    if (Array.isArray(parsed) && parsed.every(isTicket)) return parsed;
+    console.error("Stored requester tickets have an invalid format.");
+  } catch (error) {
+    console.error("Could not read stored requester tickets.", error);
+  }
+
+  return [];
+}
+
+function isTicket(value: unknown): value is Ticket {
+  if (typeof value !== "object" || value === null) return false;
+  const ticket = value as Record<string, unknown>;
+  return typeof ticket.id === "string"
+    && typeof ticket.ticketNo === "string"
+    && typeof ticket.subject === "string"
+    && typeof ticket.description === "string"
+    && typeof ticket.category === "string"
+    && typeof ticket.subCategory === "string"
+    && typeof ticket.status === "string"
+    && typeof ticket.priority === "string"
+    && typeof ticket.createdAt === "string"
+    && typeof ticket.updatedAt === "string";
 }

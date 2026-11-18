@@ -1,6 +1,7 @@
 export type TicketStatus = "New" | "Open" | "In Progress" | "On Hold" | "Resolved" | "Closed" | "Reopened";
 
 export type TicketPriority = "Low" | "Medium" | "High" | "Critical";
+export type TicketImpact = "Low" | "Medium" | "High";
 
 export interface Ticket {
   id: string;
@@ -13,6 +14,13 @@ export interface Ticket {
   priority: TicketPriority;
   createdAt: string;
   updatedAt: string;
+  impact?: TicketImpact;
+  urgency?: TicketImpact;
+  employeeId?: string;
+  department?: string;
+  phone?: string;
+  location?: string;
+  attachments?: string[];
 }
 
 export interface DashboardStats {
