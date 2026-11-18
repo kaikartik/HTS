@@ -3,6 +3,22 @@ export type TicketStatus = "New" | "Open" | "In Progress" | "On Hold" | "Resolve
 export type TicketPriority = "Low" | "Medium" | "High" | "Critical";
 export type TicketImpact = "Low" | "Medium" | "High";
 
+export interface TicketHistoryEntry {
+  status: TicketStatus;
+  at: string;
+  by: string;
+  note?: string;
+}
+
+export interface TicketReply {
+  id: string;
+  author: string;
+  role: "Requester" | "Agent";
+  body: string;
+  createdAt: string;
+  isInternal: boolean;
+}
+
 export interface Ticket {
   id: string;
   ticketNo: string;
@@ -21,6 +37,8 @@ export interface Ticket {
   phone?: string;
   location?: string;
   attachments?: string[];
+  history?: TicketHistoryEntry[];
+  replies?: TicketReply[];
 }
 
 export interface DashboardStats {

@@ -12,6 +12,7 @@ Date: 18 Nov 2026
    - Raise a Ticket form: category/sub-category, impact and urgency with calculated priority, attachment upload with type/size validation (10 MB), KB suggestions, success screen with ticket number
    - My Tickets list with URL-persisted search, combined filters, sorting, responsive layout and pagination; ticket detail page with not-found handling
    - Mock API layer in _lib/requesterApi.ts so real backend APIs can be swapped in on 26 Nov
+   - 18 Nov 2026: Ticket detail page: added status history timeline, public conversation thread and reply box (internal notes hidden from requesters), closed-ticket handling, and mock data for history/replies. Pending: Knowledge Base pages, reopen ticket and CSAT rating, API integration.
 
 2. Files Modified / Created:
    - frontend/src/app/requester-agni/

@@ -12,6 +12,9 @@ export const mockTickets: Ticket[] = [
     priority: "High",
     createdAt: "2026-11-18T09:10:00Z",
     updatedAt: "2026-11-18T09:10:00Z",
+    history: [
+      { status: "New", at: "2026-11-18T09:10:00Z", by: "Aarav Sharma", note: "Ticket submitted." },
+    ],
   },
   {
     id: "ticket-111",
@@ -24,6 +27,16 @@ export const mockTickets: Ticket[] = [
     priority: "Medium",
     createdAt: "2026-11-17T14:25:00Z",
     updatedAt: "2026-11-18T08:15:00Z",
+    history: [
+      { status: "New", at: "2026-11-17T14:25:00Z", by: "Meera Iyer", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-17T14:42:00Z", by: "System" },
+      { status: "In Progress", at: "2026-11-18T08:15:00Z", by: "Priya Nair", note: "Checking the classroom connection." },
+    ],
+    replies: [
+      { id: "reply-111-1", author: "Priya Nair", role: "Agent", body: "I’m checking the projector input and cable now.", createdAt: "2026-11-18T08:20:00Z", isInternal: false },
+      { id: "reply-111-2", author: "Meera Iyer", role: "Requester", body: "Thank you. The issue happens with both the classroom PC and my laptop.", createdAt: "2026-11-18T08:35:00Z", isInternal: false },
+      { id: "reply-111-3", author: "Priya Nair", role: "Agent", body: "A spare adapter is being brought to the lab.", createdAt: "2026-11-18T08:40:00Z", isInternal: true },
+    ],
   },
   {
     id: "ticket-110",
@@ -36,6 +49,14 @@ export const mockTickets: Ticket[] = [
     priority: "Critical",
     createdAt: "2026-11-17T10:40:00Z",
     updatedAt: "2026-11-17T11:05:00Z",
+    history: [
+      { status: "New", at: "2026-11-17T10:40:00Z", by: "Rohan Mehta", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-17T11:05:00Z", by: "System", note: "Assigned to Campus Access." },
+    ],
+    replies: [
+      { id: "reply-110-1", author: "Rohan Mehta", role: "Requester", body: "I can share my ID number if that helps.", createdAt: "2026-11-17T11:10:00Z", isInternal: false },
+      { id: "reply-110-2", author: "Dev Patel", role: "Agent", body: "Thanks. We’re checking the card permissions with the library team.", createdAt: "2026-11-17T11:22:00Z", isInternal: false },
+    ],
   },
   {
     id: "ticket-109",
@@ -48,6 +69,15 @@ export const mockTickets: Ticket[] = [
     priority: "Low",
     createdAt: "2026-11-16T13:15:00Z",
     updatedAt: "2026-11-17T09:30:00Z",
+    history: [
+      { status: "New", at: "2026-11-16T13:15:00Z", by: "Anika Rao", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-16T13:32:00Z", by: "System" },
+      { status: "In Progress", at: "2026-11-17T08:40:00Z", by: "Sameer Khan" },
+      { status: "Resolved", at: "2026-11-17T09:30:00Z", by: "Sameer Khan", note: "The fan motor was reset and tested." },
+    ],
+    replies: [
+      { id: "reply-109-1", author: "Sameer Khan", role: "Agent", body: "The fan is working again. Please let us know if it stops.", createdAt: "2026-11-17T09:31:00Z", isInternal: false },
+    ],
   },
   {
     id: "ticket-108",
@@ -60,6 +90,18 @@ export const mockTickets: Ticket[] = [
     priority: "High",
     createdAt: "2026-11-15T16:50:00Z",
     updatedAt: "2026-11-18T07:45:00Z",
+    history: [
+      { status: "New", at: "2026-11-15T16:50:00Z", by: "Kabir Shah", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-15T17:10:00Z", by: "System" },
+      { status: "In Progress", at: "2026-11-16T09:05:00Z", by: "Neha Kapoor" },
+      { status: "Resolved", at: "2026-11-17T13:20:00Z", by: "Neha Kapoor", note: "Drainage was cleared and the ceiling checked." },
+      { status: "Reopened", at: "2026-11-18T07:45:00Z", by: "Kabir Shah", note: "The leak has started again." },
+    ],
+    replies: [
+      { id: "reply-108-1", author: "Neha Kapoor", role: "Agent", body: "The drainage was cleared yesterday. I’ll arrange a follow-up inspection.", createdAt: "2026-11-17T13:22:00Z", isInternal: false },
+      { id: "reply-108-2", author: "Kabir Shah", role: "Requester", body: "Water is dripping from the same spot this morning.", createdAt: "2026-11-18T07:46:00Z", isInternal: false },
+      { id: "reply-108-3", author: "Neha Kapoor", role: "Agent", body: "Facilities has been notified to inspect the roof above the stairwell.", createdAt: "2026-11-18T08:00:00Z", isInternal: true },
+    ],
   },
   {
     id: "ticket-107",
@@ -72,6 +114,11 @@ export const mockTickets: Ticket[] = [
     priority: "Medium",
     createdAt: "2026-11-14T11:20:00Z",
     updatedAt: "2026-11-16T12:10:00Z",
+    history: [
+      { status: "New", at: "2026-11-14T11:20:00Z", by: "Sana Ali", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-14T11:38:00Z", by: "System" },
+      { status: "On Hold", at: "2026-11-16T12:10:00Z", by: "Arjun Bose", note: "Waiting for the identity provider team." },
+    ],
   },
   {
     id: "ticket-106",
@@ -84,6 +131,17 @@ export const mockTickets: Ticket[] = [
     priority: "Low",
     createdAt: "2026-11-13T09:05:00Z",
     updatedAt: "2026-11-15T10:00:00Z",
+    history: [
+      { status: "New", at: "2026-11-13T09:05:00Z", by: "Isha Verma", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-13T09:22:00Z", by: "System" },
+      { status: "In Progress", at: "2026-11-14T08:30:00Z", by: "Vikram Das" },
+      { status: "Resolved", at: "2026-11-14T13:10:00Z", by: "Vikram Das", note: "A replacement keyboard was delivered." },
+      { status: "Closed", at: "2026-11-15T10:00:00Z", by: "System", note: "Closed after confirmation." },
+    ],
+    replies: [
+      { id: "reply-106-1", author: "Vikram Das", role: "Agent", body: "A replacement keyboard has been delivered to workstation 18.", createdAt: "2026-11-14T13:12:00Z", isInternal: false },
+      { id: "reply-106-2", author: "Isha Verma", role: "Requester", body: "The replacement is working, thank you.", createdAt: "2026-11-14T13:40:00Z", isInternal: false },
+    ],
   },
   {
     id: "ticket-105",
@@ -96,6 +154,10 @@ export const mockTickets: Ticket[] = [
     priority: "Medium",
     createdAt: "2026-11-12T15:35:00Z",
     updatedAt: "2026-11-13T08:50:00Z",
+    history: [
+      { status: "New", at: "2026-11-12T15:35:00Z", by: "Devika Sen", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-13T08:50:00Z", by: "System" },
+    ],
   },
   {
     id: "ticket-104",
@@ -108,6 +170,11 @@ export const mockTickets: Ticket[] = [
     priority: "High",
     createdAt: "2026-11-11T12:45:00Z",
     updatedAt: "2026-11-12T10:20:00Z",
+    history: [
+      { status: "New", at: "2026-11-11T12:45:00Z", by: "Rahul Jain", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-11T13:00:00Z", by: "System" },
+      { status: "In Progress", at: "2026-11-12T10:20:00Z", by: "Maya Thomas", note: "Running a hardware diagnostic." },
+    ],
   },
   {
     id: "ticket-103",
@@ -120,6 +187,9 @@ export const mockTickets: Ticket[] = [
     priority: "Low",
     createdAt: "2026-11-10T17:10:00Z",
     updatedAt: "2026-11-10T17:10:00Z",
+    history: [
+      { status: "New", at: "2026-11-10T17:10:00Z", by: "Nisha Gupta", note: "Ticket submitted." },
+    ],
   },
   {
     id: "ticket-102",
@@ -132,6 +202,16 @@ export const mockTickets: Ticket[] = [
     priority: "Medium",
     createdAt: "2026-11-09T10:30:00Z",
     updatedAt: "2026-11-10T14:15:00Z",
+    history: [
+      { status: "New", at: "2026-11-09T10:30:00Z", by: "Karan Sethi", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-09T10:48:00Z", by: "System" },
+      { status: "In Progress", at: "2026-11-10T08:30:00Z", by: "Ritu Malhotra" },
+      { status: "Resolved", at: "2026-11-10T14:15:00Z", by: "Ritu Malhotra", note: "The profile spelling has been corrected." },
+    ],
+    replies: [
+      { id: "reply-102-1", author: "Ritu Malhotra", role: "Agent", body: "The spelling is corrected in your student profile.", createdAt: "2026-11-10T14:16:00Z", isInternal: false },
+      { id: "reply-102-2", author: "Karan Sethi", role: "Requester", body: "I’ve checked and it looks right now.", createdAt: "2026-11-10T14:30:00Z", isInternal: false },
+    ],
   },
   {
     id: "ticket-101",
@@ -144,5 +224,9 @@ export const mockTickets: Ticket[] = [
     priority: "Critical",
     createdAt: "2026-11-08T08:55:00Z",
     updatedAt: "2026-11-08T09:20:00Z",
+    history: [
+      { status: "New", at: "2026-11-08T08:55:00Z", by: "Tara Bose", note: "Ticket submitted." },
+      { status: "Open", at: "2026-11-08T09:20:00Z", by: "System", note: "Assigned to Facilities." },
+    ],
   },
 ];

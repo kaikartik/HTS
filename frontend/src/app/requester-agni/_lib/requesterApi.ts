@@ -1,6 +1,6 @@
 import { mockTickets } from "./mockData";
 import { mockKbArticles, type KnowledgeBaseArticle } from "./mockKb";
-import type { DashboardStats, Ticket, TicketImpact, TicketPriority } from "./types";
+import type { DashboardStats, Ticket, TicketImpact, TicketPriority, TicketReply } from "./types";
 
 export type LoginCredentials = {
   email: string;
@@ -98,12 +98,54 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
 export async function getMyTickets(): Promise<Ticket[]> {
   await new Promise((resolve) => setTimeout(resolve, 250));
-  return getAllTickets();
+  return getAllTickets().map((ticket) => ({
+    ...ticket,
+    replies: (ticket.replies ?? []).filter((reply) => !reply.isInternal),
+  }));
 }
 
 export async function getTicket(id: string): Promise<Ticket | null> {
   await new Promise((resolve) => setTimeout(resolve, 150));
-  return getAllTickets().find((ticket) => ticket.id === id) ?? null;
+  const ticket = getAllTickets().find((entry) => entry.id === id);
+  if (!ticket) return null;
+
+  return {
+    ...ticket,
+    history: ticket.history ? [...ticket.history] : [],
+    replies: (ticket.replies ?? []).filter((reply) => !reply.isInternal),
+  };
+}
+
+export async function addReply(ticketId: string, body: string): Promise<TicketReply> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const trimmedBody = body.trim();
+  if (!trimmedBody) throw new Error("Write a reply before sending.");
+  if (trimmedBody.length > 1000) throw new Error("Replies must be 1000 characters or fewer.");
+
+  const ticket = getAllTickets().find((entry) => entry.id === ticketId);
+  if (!ticket) throw new Error("This ticket could not be found.");
+  if (ticket.status === "Closed") throw new Error("This ticket is closed. Raise a new ticket if you need more help.");
+
+  const user = getRequesterUser();
+  if (!user) throw new Error("Please sign in again before replying.");
+
+  const createdAt = new Date().toISOString();
+  const reply: TicketReply = {
+    id: `reply-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    author: user.name,
+    role: "Requester",
+    body: trimmedBody,
+    createdAt,
+    isInternal: false,
+  };
+
+  saveTicket({
+    ...ticket,
+    updatedAt: createdAt,
+    replies: [...(ticket.replies ?? []), reply],
+  });
+
+  return reply;
 }
 
 export function searchKb(query: string): KnowledgeBaseArticle[] {
@@ -156,6 +198,7 @@ export async function createTicket(data: CreateTicketData): Promise<Ticket> {
     priority: data.priority,
     createdAt: timestamp,
     updatedAt: timestamp,
+    history: [{ status: "New", at: timestamp, by: getRequesterUser()?.name ?? "Requester", note: "Ticket submitted." }],
     impact: data.impact,
     urgency: data.urgency,
     employeeId: data.employeeId,
@@ -176,7 +219,22 @@ export async function createTicket(data: CreateTicketData): Promise<Ticket> {
 }
 
 function getAllTickets(): Ticket[] {
-  return [...mockTickets, ...readCreatedTickets()].sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
+  const storedTickets = readCreatedTickets();
+  const storedById = new Map(storedTickets.map((ticket) => [ticket.id, ticket]));
+  const mockIds = new Set(mockTickets.map((ticket) => ticket.id));
+  return [
+    ...mockTickets.map((ticket) => storedById.get(ticket.id) ?? ticket),
+    ...storedTickets.filter((ticket) => !mockIds.has(ticket.id)),
+  ].sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
+}
+
+function saveTicket(ticket: Ticket): void {
+  const tickets = readCreatedTickets().filter((entry) => entry.id !== ticket.id);
+  try {
+    window.localStorage.setItem(CREATED_TICKETS_KEY, JSON.stringify([...tickets, ticket]));
+  } catch {
+    throw new Error("Your reply could not be saved in this browser. Please try again.");
+  }
 }
 
 function readCreatedTickets(): Ticket[] {
