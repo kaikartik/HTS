@@ -19,6 +19,13 @@ export interface TicketReply {
   isInternal: boolean;
 }
 
+export interface TicketFeedback {
+  ticketId: string;
+  rating: number;
+  comment?: string;
+  submittedAt: string;
+}
+
 export interface Ticket {
   id: string;
   ticketNo: string;
@@ -30,6 +37,7 @@ export interface Ticket {
   priority: TicketPriority;
   createdAt: string;
   updatedAt: string;
+  resolvedAt?: string;
   impact?: TicketImpact;
   urgency?: TicketImpact;
   employeeId?: string;

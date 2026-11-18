@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import PriorityBadge from "../../../_components/PriorityBadge";
 import PrimaryButton from "../../../_components/PrimaryButton";
 import StatusBadge from "../../../_components/StatusBadge";
-import { addReply, getTicket } from "../../../_lib/requesterApi";
+import { addReply, getFeedback, getTicket, reopenTicket, submitFeedback } from "../../../_lib/requesterApi";
 import { themeClasses } from "../../../_lib/theme";
-import type { Ticket, TicketReply } from "../../../_lib/types";
+import type { Ticket, TicketFeedback, TicketReply } from "../../../_lib/types";
+
+const reopenWindowMs = 7 * 24 * 60 * 60 * 1000;
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-GB", {
@@ -61,16 +63,32 @@ export default function TicketDetailsPage() {
   const [replyBody, setReplyBody] = useState("");
   const [replyError, setReplyError] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
+  const [feedback, setFeedback] = useState<TicketFeedback | null>(null);
+  const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackError, setFeedbackError] = useState("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [isReopenDialogOpen, setIsReopenDialogOpen] = useState(false);
+  const [reopenReason, setReopenReason] = useState("");
+  const [reopenError, setReopenError] = useState("");
+  const [isReopening, setIsReopening] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const reopenDialogRef = useRef<HTMLDialogElement>(null);
+  const reopenReasonRef = useRef<HTMLTextAreaElement>(null);
+  const feedbackHeadingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     let active = true;
     setTicket(null);
+    setFeedback(null);
     setIsLoading(true);
     setLoadError("");
 
     getTicket(id)
       .then((result) => {
-        if (active) setTicket(result);
+        if (!active) return;
+        setTicket(result);
+        setFeedback(result ? getFeedback(result.id) : null);
       })
       .catch((error: unknown) => {
         if (active) setLoadError(error instanceof Error ? error.message : "Could not load this ticket.");
@@ -83,6 +101,18 @@ export default function TicketDetailsPage() {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    const dialog = reopenDialogRef.current;
+    if (!dialog) return;
+
+    if (isReopenDialogOpen && !dialog.open) {
+      dialog.showModal();
+      reopenReasonRef.current?.focus();
+    } else if (!isReopenDialogOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isReopenDialogOpen]);
 
   if (isLoading) {
     return (
@@ -129,6 +159,16 @@ export default function TicketDetailsPage() {
     { label: "Location", value: ticket.location },
   ].filter((detail): detail is { label: string; value: string } => Boolean(detail.value));
   const ticketId = ticket.id;
+  const resolvedAt = ticket.resolvedAt ? Date.parse(ticket.resolvedAt) : Number.NaN;
+  const hasResolvedAt = Number.isFinite(resolvedAt);
+  const reopenDeadline = hasResolvedAt ? resolvedAt + reopenWindowMs : Number.NaN;
+  const reopenWindowPassed = hasResolvedAt && Date.now() > reopenDeadline;
+  const daysRemaining = hasResolvedAt
+    ? Math.max(0, 7 - Math.floor((Date.now() - resolvedAt) / (24 * 60 * 60 * 1000)))
+    : 0;
+  const canReopen = ticket.status === "Resolved" && hasResolvedAt && !reopenWindowPassed;
+  const showReopenExpiredMessage = ticket.status === "Closed" && reopenWindowPassed;
+  const showFeedback = ticket.status === "Resolved" || ticket.status === "Closed" || feedback !== null;
 
   async function handleReplySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -155,6 +195,52 @@ export default function TicketDetailsPage() {
     }
   }
 
+  async function handleReopenSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const reason = reopenReason.trim();
+    if (reason.length < 10) {
+      setReopenError("Please enter a reason of at least 10 characters.");
+      return;
+    }
+    if (reason.length > 500) {
+      setReopenError("The reason must be 500 characters or fewer.");
+      return;
+    }
+
+    setReopenError("");
+    setIsReopening(true);
+    try {
+      const reopenedTicket = await reopenTicket(ticketId, reason);
+      setTicket(reopenedTicket);
+      setReopenReason("");
+      setIsReopenDialogOpen(false);
+      setSuccessMessage("Ticket reopened successfully.");
+    } catch (error) {
+      setReopenError(error instanceof Error ? error.message : "The ticket could not be reopened. Please try again.");
+    } finally {
+      setIsReopening(false);
+    }
+  }
+
+  async function handleFeedbackSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (feedbackRating === null) {
+      setFeedbackError("Choose a rating from 1 to 5 stars.");
+      return;
+    }
+
+    setFeedbackError("");
+    setIsSubmittingFeedback(true);
+    try {
+      const submittedFeedback = await submitFeedback(ticketId, feedbackRating, feedbackComment);
+      setFeedback(submittedFeedback);
+    } catch (error) {
+      setFeedbackError(error instanceof Error ? error.message : "Your feedback could not be saved. Please try again.");
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  }
+
   return (
     <div className="mx-auto min-w-0 max-w-[1180px]">
       <Link href="/requester-agni/tickets" className="inline-flex min-h-12 items-center text-sm font-semibold text-[#00448E] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">← Back to My tickets</Link>
@@ -166,6 +252,71 @@ export default function TicketDetailsPage() {
           <PriorityBadge priority={ticket.priority} />
         </div>
       </header>
+
+      {canReopen && (
+        <section aria-label="Resolved ticket" className="mb-6 flex min-w-0 flex-col gap-4 rounded-xl border border-[#B7D7C1] bg-[#F0F9F2] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-[#166534]">This ticket has been marked as resolved</h2>
+            <p className="mt-1 text-sm leading-6 text-[#315B3B]">You can reopen it for {daysRemaining} more {daysRemaining === 1 ? "day" : "days"}.</p>
+          </div>
+          <div className="flex min-w-0 flex-col gap-2 sm:w-auto sm:shrink-0 sm:flex-row">
+            <PrimaryButton type="button" onClick={() => { setReopenError(""); setIsReopenDialogOpen(true); }} className="sm:w-auto">Reopen ticket</PrimaryButton>
+            <button type="button" onClick={() => { feedbackHeadingRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); feedbackHeadingRef.current?.focus(); }} className="min-h-12 rounded-xl border border-[#00448E] px-4 text-sm font-semibold text-[#00448E] transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">Rate this ticket</button>
+          </div>
+        </section>
+      )}
+
+      {showReopenExpiredMessage && (
+        <p role="status" className="mb-6 rounded-xl border border-[#D9E2EF] bg-white p-5 text-sm leading-6 text-[#5B6B80]">
+          The 7-day reopen window has passed. Please <Link href="/requester-agni/tickets/new" className="font-semibold text-[#00448E] underline hover:text-[#003470]">raise a new ticket</Link> if you still need help.
+        </p>
+      )}
+
+      {successMessage && <p role="status" className="mb-6 rounded-lg border border-[#B7D7C1] bg-[#F0F9F2] p-4 text-sm font-medium text-[#166534]">{successMessage}</p>}
+
+      <dialog
+        ref={reopenDialogRef}
+        aria-labelledby="reopen-dialog-heading"
+        onClose={() => setIsReopenDialogOpen(false)}
+        onCancel={() => setIsReopenDialogOpen(false)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setIsReopenDialogOpen(false);
+          }
+        }}
+        className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-xl border border-[#D9E2EF] bg-white p-0 text-[#0F1F33] shadow-[0_20px_60px_rgba(15,31,51,0.25)] backdrop:bg-[#0F1F33]/50"
+      >
+        <form noValidate onSubmit={handleReopenSubmit} className="p-5 sm:p-7">
+          <h2 id="reopen-dialog-heading" className="text-xl font-semibold text-[#0F1F33]">Reopen ticket</h2>
+          <p className="mt-2 text-sm leading-6 text-[#5B6B80]">Tell us why this ticket needs more attention.</p>
+          <label htmlFor="reopen-reason" className="mt-5 block text-sm font-medium text-[#0F1F33]">Reason</label>
+          <textarea
+            ref={reopenReasonRef}
+            id="reopen-reason"
+            value={reopenReason}
+            onChange={(event) => {
+              setReopenReason(event.target.value);
+              if (reopenError && event.target.value.trim().length >= 10) setReopenError("");
+            }}
+            minLength={10}
+            maxLength={500}
+            required
+            rows={4}
+            aria-describedby={reopenError ? "reopen-error reopen-counter" : "reopen-counter"}
+            aria-invalid={Boolean(reopenError)}
+            className={`${themeClasses.authInput} mt-2 h-auto min-h-28 resize-y py-3`}
+          />
+          <div className="mt-1 flex min-h-5 flex-wrap items-start justify-between gap-2">
+            {reopenError ? <p id="reopen-error" role="alert" className="text-sm text-[#a52d2a]">{reopenError}</p> : <span />}
+            <p id="reopen-counter" className="ml-auto text-xs text-[#5B6B80]">{reopenReason.length}/500</p>
+          </div>
+          <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button type="button" onClick={() => setIsReopenDialogOpen(false)} className="min-h-12 rounded-xl border border-[#D9E2EF] px-4 text-sm font-semibold text-[#5B6B80] transition hover:bg-[#F4F7FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00448E]">Cancel</button>
+            <PrimaryButton isLoading={isReopening} className="sm:w-auto">Reopen ticket</PrimaryButton>
+          </div>
+        </form>
+      </dialog>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,1fr)] lg:items-start">
         <section aria-labelledby="conversation-heading" className="min-w-0 rounded-xl border border-[#D9E2EF] bg-white p-5 sm:p-7">
@@ -247,6 +398,62 @@ export default function TicketDetailsPage() {
               <p className="mt-5 text-sm text-[#5B6B80]">No status history available.</p>
             )}
           </section>
+
+          {showFeedback && (
+            <section aria-labelledby="ticket-feedback-heading" className="min-w-0 rounded-xl border border-[#D9E2EF] bg-white p-5 sm:p-7">
+              <h2 ref={feedbackHeadingRef} id="ticket-feedback-heading" tabIndex={-1} className="text-lg font-semibold text-[#0F1F33] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00448E]">
+                {feedback ? "Thanks for your feedback" : "How did we do?"}
+              </h2>
+              {feedback ? (
+                <div className="mt-4">
+                  <p className="text-lg tracking-wide text-[#00448E]" aria-label={`Rated ${feedback.rating} out of 5 stars`}>
+                    {"★".repeat(feedback.rating)}{"☆".repeat(5 - feedback.rating)}
+                    <span className="ml-2 text-sm font-medium tracking-normal text-[#5B6B80]">{feedback.rating} out of 5</span>
+                  </p>
+                  {feedback.comment && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[#0F1F33]">{feedback.comment}</p>}
+                  <time className="mt-3 block text-xs text-[#5B6B80]" dateTime={feedback.submittedAt}>{formatTime(feedback.submittedAt)}</time>
+                </div>
+              ) : (
+                <form onSubmit={handleFeedbackSubmit} className="mt-4">
+                  <fieldset>
+                    <legend className="text-sm text-[#5B6B80]">Select a rating from 1 to 5 stars</legend>
+                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          aria-label={`${value} star${value === 1 ? "" : "s"}`}
+                          aria-pressed={feedbackRating === value}
+                          disabled={isSubmittingFeedback}
+                          onClick={() => {
+                            setFeedbackRating(value);
+                            setFeedbackError("");
+                          }}
+                          className="grid h-11 w-11 place-items-center rounded-md text-3xl leading-none text-[#00448E] transition hover:bg-[#E6EEF8] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#00448E] disabled:cursor-wait disabled:opacity-60"
+                        >
+                          <span aria-hidden="true">{feedbackRating !== null && value <= feedbackRating ? "★" : "☆"}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <label htmlFor="ticket-feedback-comment" className="mt-4 block text-sm font-medium text-[#0F1F33]">Comment (optional)</label>
+                  <textarea
+                    id="ticket-feedback-comment"
+                    value={feedbackComment}
+                    onChange={(event) => setFeedbackComment(event.target.value)}
+                    maxLength={500}
+                    rows={3}
+                    className={`${themeClasses.authInput} mt-2 h-auto min-h-24 resize-y py-3`}
+                  />
+                  <div className="mt-1 flex min-h-5 flex-wrap items-start justify-between gap-2">
+                    {feedbackError ? <p role="alert" className="text-sm text-[#a52d2a]">{feedbackError}</p> : <span />}
+                    <p className="ml-auto text-xs text-[#5B6B80]">{feedbackComment.length}/500</p>
+                  </div>
+                  <PrimaryButton isLoading={isSubmittingFeedback} className="mt-4 sm:w-auto">Submit feedback</PrimaryButton>
+                </form>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>

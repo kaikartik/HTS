@@ -14,6 +14,7 @@ Date: 18 Nov 2026
    - Mock API layer in _lib/requesterApi.ts so real backend APIs can be swapped in on 26 Nov
    - 18 Nov 2026: Ticket detail page: added status history timeline, public conversation thread and reply box (internal notes hidden from requesters), closed-ticket handling, and mock data for history/replies. Pending: Knowledge Base pages, reopen ticket and CSAT rating, API integration.
    - 18 Nov 2026: Knowledge Base: added KB search page with category filters, article page with 1-5 star helpful rating, published-only articles (drafts hidden), links from ticket form suggestions, and linked dashboard recent tickets to ticket detail pages. Pending: reopen ticket and CSAT rating, API integration, final testing.
+   - 18 Nov 2026: Reopen and CSAT: added the seven-day reopen window, automatic closure, validated reopen reasons, and one-time feedback; tested desktop and mobile layouts. Pending: API integration and final testing.
 
 2. Files Modified / Created:
    - frontend/src/app/requester-agni/

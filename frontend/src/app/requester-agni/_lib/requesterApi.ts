@@ -1,6 +1,6 @@
 import { mockTickets } from "./mockData";
 import { mockKbArticles, type KnowledgeBaseArticle } from "./mockKb";
-import type { DashboardStats, Ticket, TicketImpact, TicketPriority, TicketReply } from "./types";
+import type { DashboardStats, Ticket, TicketFeedback, TicketImpact, TicketPriority, TicketReply } from "./types";
 
 export type LoginCredentials = {
   email: string;
@@ -19,6 +19,8 @@ export type RequesterUser = {
 const REQUESTER_USER_KEY = "requester-agni-user";
 const CREATED_TICKETS_KEY = "requester-agni-created-tickets";
 const KB_RATINGS_KEY = "requester-agni-kb-ratings";
+const TICKET_FEEDBACK_KEY = "requester-agni-ticket-feedback";
+const REOPEN_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type CreateTicketData = {
   subject: string;
@@ -91,7 +93,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const tickets = await getAllTickets();
   return {
     total: tickets.length,
-    open: tickets.filter((ticket) => ticket.status === "New" || ticket.status === "Open").length,
+    open: tickets.filter((ticket) => ticket.status === "New" || ticket.status === "Open" || ticket.status === "Reopened").length,
     inProgress: tickets.filter((ticket) => ticket.status === "In Progress").length,
     resolved: tickets.filter((ticket) => ticket.status === "Resolved").length,
   };
@@ -147,6 +149,86 @@ export async function addReply(ticketId: string, body: string): Promise<TicketRe
   });
 
   return reply;
+}
+
+export async function reopenTicket(ticketId: string, reason: string): Promise<Ticket> {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const trimmedReason = reason.trim();
+  if (trimmedReason.length < 10) throw new Error("Please provide a reason of at least 10 characters.");
+  if (trimmedReason.length > 500) throw new Error("The reason must be 500 characters or fewer.");
+
+  const ticket = getAllTickets().find((entry) => entry.id === ticketId);
+  if (!ticket) throw new Error("This ticket could not be found.");
+  if (ticket.status !== "Resolved") {
+    if (ticket.status === "Closed" && ticket.resolvedAt && Date.now() > Date.parse(ticket.resolvedAt) + REOPEN_WINDOW_MS) {
+      throw new Error("The 7-day reopen window has passed.");
+    }
+    throw new Error("Only resolved tickets can be reopened.");
+  }
+
+  const resolvedAt = ticket.resolvedAt ? Date.parse(ticket.resolvedAt) : Number.NaN;
+  if (!Number.isFinite(resolvedAt)) throw new Error("This ticket does not have a resolution date and cannot be reopened.");
+  if (Date.now() > resolvedAt + REOPEN_WINDOW_MS) throw new Error("The 7-day reopen window has passed.");
+
+  const user = getRequesterUser();
+  if (!user) throw new Error("Please sign in again before reopening this ticket.");
+
+  const now = new Date().toISOString();
+  const historyEntry = { status: "Reopened" as const, at: now, by: user.name, note: trimmedReason };
+  const reply: TicketReply = {
+    id: `reply-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    author: user.name,
+    role: "Requester",
+    body: trimmedReason,
+    createdAt: now,
+    isInternal: false,
+  };
+  const reopenedTicket: Ticket = {
+    ...ticket,
+    status: "Reopened",
+    updatedAt: now,
+    history: [...(ticket.history ?? []), historyEntry],
+    replies: [...(ticket.replies ?? []), reply],
+  };
+  saveTicket(reopenedTicket);
+  return reopenedTicket;
+}
+
+export async function submitFeedback(ticketId: string, rating: number, comment?: string): Promise<TicketFeedback> {
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    throw new Error("Choose a rating from 1 to 5 stars.");
+  }
+  const trimmedComment = comment?.trim();
+  if (trimmedComment && trimmedComment.length > 500) {
+    throw new Error("Comments must be 500 characters or fewer.");
+  }
+
+  const ticket = getAllTickets().find((entry) => entry.id === ticketId);
+  if (!ticket) throw new Error("This ticket could not be found.");
+  if (ticket.status !== "Resolved" && ticket.status !== "Closed") {
+    throw new Error("Feedback is only available for resolved or closed tickets.");
+  }
+
+  const feedbackByTicket = readTicketFeedback();
+  if (feedbackByTicket[ticketId]) throw new Error("Feedback has already been submitted for this ticket.");
+
+  const feedback: TicketFeedback = {
+    ticketId,
+    rating,
+    ...(trimmedComment ? { comment: trimmedComment } : {}),
+    submittedAt: new Date().toISOString(),
+  };
+  try {
+    window.localStorage.setItem(TICKET_FEEDBACK_KEY, JSON.stringify({ ...feedbackByTicket, [ticketId]: feedback }));
+  } catch {
+    throw new Error("Your feedback could not be saved in this browser. Please try again.");
+  }
+  return feedback;
+}
+
+export function getFeedback(ticketId: string): TicketFeedback | null {
+  return readTicketFeedback()[ticketId] ?? null;
 }
 
 export async function listKbArticles(): Promise<KnowledgeBaseArticle[]> {
@@ -258,10 +340,31 @@ function getAllTickets(): Ticket[] {
   const storedTickets = readCreatedTickets();
   const storedById = new Map(storedTickets.map((ticket) => [ticket.id, ticket]));
   const mockIds = new Set(mockTickets.map((ticket) => ticket.id));
-  return [
+  const tickets = [
     ...mockTickets.map((ticket) => storedById.get(ticket.id) ?? ticket),
     ...storedTickets.filter((ticket) => !mockIds.has(ticket.id)),
   ].sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
+  return tickets.map(closeExpiredTicket);
+}
+
+function closeExpiredTicket(ticket: Ticket): Ticket {
+  if (ticket.status !== "Resolved" || !ticket.resolvedAt) return ticket;
+  const resolvedAt = Date.parse(ticket.resolvedAt);
+  if (!Number.isFinite(resolvedAt) || Date.now() <= resolvedAt + REOPEN_WINDOW_MS) return ticket;
+
+  const closedAt = new Date(resolvedAt + REOPEN_WINDOW_MS).toISOString();
+  const note = "Closed automatically after 7 days";
+  const history = ticket.history ?? [];
+  if (history.some((entry) => entry.status === "Closed" && entry.at === closedAt && entry.note === note)) {
+    return { ...ticket, status: "Closed", updatedAt: closedAt };
+  }
+
+  return {
+    ...ticket,
+    status: "Closed",
+    updatedAt: closedAt,
+    history: [...history, { status: "Closed", at: closedAt, by: "System", note }],
+  };
 }
 
 function saveTicket(ticket: Ticket): void {
@@ -301,6 +404,36 @@ function readKbRatings(): Record<string, number> {
   }
 
   return {};
+}
+
+function readTicketFeedback(): Record<string, TicketFeedback> {
+  try {
+    const stored = window.localStorage.getItem(TICKET_FEEDBACK_KEY);
+    if (!stored) return {};
+
+    const parsed: unknown = JSON.parse(stored);
+    if (isTicketFeedbackByTicket(parsed)) return parsed;
+    console.error("Stored ticket feedback has an invalid format.");
+  } catch (error) {
+    console.error("Could not read stored ticket feedback.", error);
+  }
+
+  return {};
+}
+
+function isTicketFeedbackByTicket(value: unknown): value is Record<string, TicketFeedback> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  return Object.entries(value).every(([ticketId, entry]) => {
+    if (typeof entry !== "object" || entry === null) return false;
+    const feedback = entry as Record<string, unknown>;
+    return feedback.ticketId === ticketId
+      && typeof feedback.rating === "number"
+      && Number.isInteger(feedback.rating)
+      && feedback.rating >= 1
+      && feedback.rating <= 5
+      && (feedback.comment === undefined || typeof feedback.comment === "string")
+      && typeof feedback.submittedAt === "string";
+  });
 }
 
 function isKbRatings(value: unknown): value is Record<string, number> {
