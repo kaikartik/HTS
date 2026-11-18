@@ -1,3 +1,6 @@
+import { mockTickets } from "./mockData";
+import type { DashboardStats, Ticket } from "./types";
+
 export type LoginCredentials = {
   email: string;
   password: string;
@@ -63,4 +66,19 @@ export function getRequesterUser(): RequesterUser | null {
 
 export function clearRequesterUser(): void {
   window.localStorage.removeItem(REQUESTER_USER_KEY);
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  return {
+    total: mockTickets.length,
+    open: mockTickets.filter((ticket) => ticket.status === "New" || ticket.status === "Open").length,
+    inProgress: mockTickets.filter((ticket) => ticket.status === "In Progress").length,
+    resolved: mockTickets.filter((ticket) => ticket.status === "Resolved").length,
+  };
+}
+
+export async function getMyTickets(): Promise<Ticket[]> {
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  return [...mockTickets].sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt));
 }
