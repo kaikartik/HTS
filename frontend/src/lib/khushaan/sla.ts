@@ -58,13 +58,20 @@ export function getSlaMetrics(
 ): SlaMetrics {
   const createdAt = new Date(ticket.created_at);
   const pausedAt = ticket.sla_paused_at ? new Date(ticket.sla_paused_at) : null;
-  const effectiveEnd = ticket.status === "On Hold" && pausedAt ? pausedAt : now;
+  const isPaused = ticket.status === "On Hold" && pausedAt !== null;
+  const effectiveEnd = isPaused ? pausedAt : now;
   const elapsedBeforePause = policy.uses_business_hours
     ? countBusinessMinutes(createdAt, effectiveEnd, businessHours)
     : Math.max(0, (effectiveEnd.getTime() - createdAt.getTime()) / 60_000);
+  const currentPauseMinutes = isPaused
+    ? policy.uses_business_hours
+      ? countBusinessMinutes(pausedAt, now, businessHours)
+      : Math.max(0, (now.getTime() - pausedAt.getTime()) / 60_000)
+    : 0;
+  const completedPauseMinutes = Math.max(0, ticket.sla_paused_minutes - currentPauseMinutes);
   const historicalPause = policy.uses_business_hours
-    ? Math.min(ticket.sla_paused_minutes, elapsedBeforePause)
-    : ticket.sla_paused_minutes;
+    ? Math.min(completedPauseMinutes, elapsedBeforePause)
+    : completedPauseMinutes;
   const elapsed = Math.max(0, Math.floor(elapsedBeforePause - historicalPause));
   const percent = policy.resolution_minutes > 0 ? (elapsed / policy.resolution_minutes) * 100 : 0;
   const state: SlaState = ticket.is_breached || percent >= 100
