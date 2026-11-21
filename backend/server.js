@@ -4,6 +4,9 @@ require('dotenv').config();
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const ticketRoutes = require('./routes/ticketRoutes'); // Import ticket routes
+const metaRoutes = require('./routes/metaRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const { startSlaJob } = require('./jobs/slaJob');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,6 +18,8 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes); // Mount ticket routes
+app.use('/api/meta', metaRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'HTS Backend API is running successfully!' });
@@ -22,4 +27,5 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    startSlaJob(db); // 75% warnings, SLA breaches and 7-day auto-close
 });

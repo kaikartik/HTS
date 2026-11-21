@@ -144,3 +144,38 @@ x-user-id: {{supervisor}}
 ### Supervisor: auto-assign a ticket that has no agent yet
 POST {{api}}/tickets/{{ticket}}/auto-assign
 x-user-id: {{supervisor}}
+### Categories, teams, statuses, priorities (for the dropdowns)
+GET {{api}}/meta
+
+### Agents with their open tickets (Supervisor / Admin)
+GET {{api}}/meta/agents?team_id=1
+x-user-id: {{supervisor}}
+
+### My notifications (agent)
+GET {{api}}/notifications
+x-user-id: {{agent}}
+
+### Notifications of agent 8 (the Electrical agent)
+GET {{api}}/notifications
+x-user-id: 8
+
+### Notifications of the supervisor
+GET {{api}}/notifications
+x-user-id: {{supervisor}}
+
+### Mark all my notifications as read
+POST {{api}}/notifications/read-all
+x-user-id: {{agent}}
+
+### Create: Critical ticket (for the SLA job test below)
+POST {{api}}/tickets
+Content-Type: application/json
+
+{
+  "subject": "Server room is down",
+  "description": "No power in the server room",
+  "category_id": 2,
+  "impact": "High",
+  "urgency": "High",
+  "requester_id": 4
+}

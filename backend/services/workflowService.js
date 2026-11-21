@@ -54,6 +54,7 @@ async function changeStatus(conn, ticket, to, actor, reason, now = new Date()) {
   if (to === 'In Progress' && !ticket.first_response_at) {
     // work starts = the first response is given
     fields.first_response_at = now;
+    fields.warned_75 = 0; // the response timer is finished, so the resolution timer can send its own 75% warning
     lateFirstResponse = now > new Date(ticket.response_due);
   }
   if (from === 'On Hold') {
