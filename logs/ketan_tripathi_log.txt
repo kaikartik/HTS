@@ -28,7 +28,7 @@ UPDATE 1 - November 17, 2026: Foundation
    - Try the API: open backend/requests.http in VS Code with the REST Client extension and click "Send Request".
 
 =============================================================================
-UPDATE 2 - November 17, 2026: Ticket creation with SLA dates + auto-assignment
+UPDATE 2 - November 18, 2026: Ticket creation with SLA dates + auto-assignment
 
 1. What I Added / Modified:
    - POST /api/tickets now works out response_due and resolution_due in business hours (Mon-Fri 09:00-18:00 IST, holidays skipped; Critical tickets run 24x7).
@@ -64,7 +64,8 @@ UPDATE 2 - November 17, 2026: Ticket creation with SLA dates + auto-assignment
    Run the unit tests: npm test (in the backend folder).
 
    =============================================================================
-   UPDATE 3 - November XX, 2026: Status workflow, SLA pause on hold, manual assignment
+
+   UPDATE 3 - November 19, 2026: Status workflow, SLA pause on hold, manual assignment
 
 1. What I Added / Modified:
    - PATCH /api/tickets/:id/status moves a ticket along the SRS life cycle: New -> Open -> In Progress <-> On Hold -> Resolved -> Closed, plus Reopened. A step that is not in the diagram is refused (409), a user who may not do it is refused (403).
@@ -108,4 +109,41 @@ UPDATE 2 - November 17, 2026: Ticket creation with SLA dates + auto-assignment
      -> 200 { message, ticket_id, assignee_id, status }
 
    Notes: sla_status in GET /api/tickets becomes "paused" while On Hold and "met" when resolved in time.
+   Run the unit tests: npm test (in the backend folder).
+
+=============================================================================
+
+   UPDATE 4 - November 20, 2026: SLA job (75% warning, escalation, auto-close), notifications and meta endpoints
+
+1. What I Added / Modified:
+   - SLA job (backend/jobs/slaJob.js). It runs when the server starts and then every minute (set SLA_JOB_INTERVAL_MS in backend/.env to change it).
+       * 75% warning: when a ticket has used 75% of its response time (until the first response) or of its resolution time, the assigned agent gets an in-app notification (the supervisors, if there is no agent yet). Sent once per timer.
+       * Breach: when the due time passes, the ticket is flagged (is_breached = true, escalated_at set), a history row is written and every supervisor is notified.
+       * Auto-close: a Resolved ticket that nobody reopened is closed automatically after 7 days (change made by the "System" user).
+       * Business hours, holidays and the 24x7 Critical clock are respected. Tickets On Hold are never warned or escalated.
+   - GET /api/meta (data for the dropdowns) and GET /api/meta/agents (agents with their open tickets).
+   - GET /api/notifications, PATCH /api/notifications/:id/read and POST /api/notifications/read-all.
+
+2. Files Modified / Created:
+   - backend/jobs/slaJob.js (new)
+   - backend/controllers/metaController.js, notificationController.js (new)
+   - backend/routes/metaRoutes.js, notificationRoutes.js (new)
+   - backend/server.js (modified: new routes mounted, SLA job started)
+   - backend/services/workflowService.js (modified: the 75% warning flag is reset after the first response)
+   - backend/tests/slaJob.test.js (new)
+
+3. How to Use / Test My Part:
+   GET /api/meta   (no header needed)
+     -> { statuses, priorities, impact_levels, urgency_levels, reopen_window_days,
+          categories: [{ category_id, name, parent_id, default_team_id, default_team_name }],
+          teams: [{ team_id, team_name }], roles: [{ role_id, role_name }] }
+   GET /api/meta/agents?team_id=1   (header x-user-id of a Supervisor or Admin; team_id is optional)
+     -> [{ user_id, name, email, team_id, team_name, open_tickets }]
+   GET /api/notifications   (header x-user-id; add ?unread=1 for unread only)
+     -> { unread_count, notifications: [{ notification_id, ticket_id, ticket_no, message, is_read, created_at }] }
+        (latest 50, newest first)
+   PATCH /api/notifications/:id/read  -> { message }
+   POST  /api/notifications/read-all  -> { message }
+   To watch the SLA job quickly: set the Critical SLA to 4 / 10 minutes, create a Critical ticket and wait.
+   The agent is warned after 3 minutes and the supervisors are told after 4 minutes.
    Run the unit tests: npm test (in the backend folder).
