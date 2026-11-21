@@ -75,6 +75,7 @@ exports.createTicket = async (req, res) => {
 exports.getTickets = async (req, res) => {
     try {
         const [tickets] = await db.query(`
+            SELECT
             T.ticket_id, T.ticket_no, T.subject, T.status, T.priority, 
             U.name AS requester_name, TM.team_name, C.name AS category_name, T.created_at
             FROM TICKET T
@@ -87,5 +88,48 @@ exports.getTickets = async (req, res) => {
     } catch (err) {
         console.error('Fetch tickets error:', err);
         res.status(500).json({ error: 'Server error while fetching tickets.' });
+    }
+};
+
+// 3. Get Tickets Assigned to the Logged-in Agent
+exports.getAssignedTickets = async (req, res) => {
+    try {
+        // User identity comes from the verified JWT middleware.
+        // Do not accept the agent ID from the browser.
+        const agentId = req.user.user_id;
+
+        const [tickets] = await db.query(`
+            SELECT
+                T.ticket_id,
+                T.ticket_no,
+                T.subject,
+                T.description,
+                T.status,
+                T.priority,
+                T.assignee_id,
+                T.requester_id,
+                U.name AS requester_name,
+                TM.team_name,
+                C.name AS category_name,
+                T.created_at,
+                T.response_due,
+                T.resolution_due,
+                T.is_breached
+            FROM TICKET T
+            JOIN USER U ON T.requester_id = U.user_id
+            JOIN TEAM TM ON T.team_id = TM.team_id
+            JOIN CATEGORY C ON T.category_id = C.category_id
+            WHERE T.assignee_id = ?
+            ORDER BY T.created_at DESC
+        `, [agentId]);
+
+        return res.json(tickets);
+
+    } catch (err) {
+        console.error('Fetch assigned tickets error:', err);
+
+        return res.status(500).json({
+            error: 'Server error while fetching assigned tickets.'
+        });
     }
 };
