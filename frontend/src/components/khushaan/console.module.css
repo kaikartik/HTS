@@ -197,6 +197,17 @@
 .comment { border: 1px solid var(--console-line); border-radius: 6px; margin: 7px 0; padding: 9px 10px; }.comment strong { font-size: 11px; }.comment p { margin: 5px 0 0; font-size: 12px; }
 .internalComment { border-left: 3px solid var(--console-amber); background: #fffaf1; }
 .assignFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tabs { display: flex; gap: 7px; border-bottom: 1px solid var(--console-line); }
+.tabs button { min-height: 42px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--console-muted); padding: 0 12px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.tabs button span { display: inline-grid; min-width: 20px; height: 20px; place-items: center; border-radius: 10px; background: #edf1f5; margin-left: 5px; font-size: 10px; }
+.activeTab { border-bottom-color: var(--console-blue) !important; color: var(--console-blue) !important; }
+.assignFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.assignFields select, .inlineSelect, .quickAgentSelect select { width: 100%; height: 38px; border: 1px solid var(--console-line); border-radius: 6px; background: white; color: var(--console-ink); padding: 0 8px; font: inherit; }
+.workloadSummary { border: 1px solid var(--console-line); border-radius: 7px; background: white; margin: 0; padding: 12px 14px; color: var(--console-muted); font-size: 12px; }
+.overloadedRow { background: #fff8ee; }.overloadedRow td:first-child { box-shadow: inset 3px 0 0 var(--console-amber); }
+.overloadedLabel { display: block; margin-top: 3px; color: #9a5b10; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.priorityMix { white-space: nowrap; font-size: 11px; }.loadTrack { width: 100%; height: 8px; min-width: 70px; overflow: hidden; border-radius: 5px; background: #edf1f5; }.loadTrack span { display: block; height: 100%; border-radius: inherit; background: var(--console-teal); }
+.quickAgentSelect { position: fixed; z-index: 50; right: 24px; bottom: 24px; width: 220px; border: 1px solid var(--console-line); border-radius: 8px; background: white; box-shadow: 0 10px 28px rgba(16,35,56,.16); padding: 12px; }.quickAgentSelect label { display: grid; gap: 6px; color: var(--console-muted); font-size: 10px; }
 
 @media (max-width: 1024px) {
   .sidebar { transform: translateX(-100%); }
