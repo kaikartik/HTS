@@ -157,12 +157,36 @@
 .dateRange input { height: 38px; padding: 0 8px; font-size: 12px; }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 
+.dashboardPage { display: grid; gap: 20px; }
+.dashboardHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.dashboardRefresh { display: grid; justify-items: end; gap: 8px; color: var(--console-muted); font-size: 11px; }
+.metricGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.metricGrid .metricCard { min-height: 118px; }
+.metricGrid .gaugeWrap { gap: 2px; }
+.metricGrid .gauge { width: 76px; height: 76px; }
+.metricGrid .gaugeText { font-size: 18px; }
+.chartGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.panel { border: 1px solid var(--console-line); border-radius: 8px; background: white; padding: 17px 18px; }
+.panel h2, .panelHeader h2 { margin: 0 0 15px; color: #263c55; font-size: 14px; }
+.attentionPanel { border: 1px solid var(--console-line); border-radius: 8px; overflow: hidden; background: white; }
+.panelHeader { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; }
+.panelHeader h2 { margin: 0; }
+.panelHeader span { color: var(--console-muted); font-size: 11px; }
+.attentionPanel .tableFrame { max-width: 100%; overflow-x: auto; }
+.attentionPanel .table { min-width: 760px; }
+.breachedRow { background: #fffafa; }
+.breachedRow td:first-child { box-shadow: inset 3px 0 0 var(--console-red); }
+.ticketLink { color: var(--console-blue); font-weight: 700; text-decoration: none; }
+.ticketLink:hover { text-decoration: underline; }
+.subtleText { display: block; margin-top: 3px; color: var(--console-muted); font-size: 10px; }
+
 @media (max-width: 1024px) {
   .sidebar { transform: translateX(-100%); }
   .sidebarOpen { transform: translateX(0); box-shadow: 12px 0 32px rgba(16,35,56,.15); }
   .mainRegion { width: 100%; margin-left: 0; }
   .menuButton { display: inline-grid; }
   .mobileOverlay { position: fixed; z-index: 25; inset: 0; display: block; border: 0; background: rgba(20,36,55,.38); }
+  .metricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -182,6 +206,14 @@
   .filterBar { max-width: none; }
   .filterBar input { width: 50%; }
   .pagination { gap: 8px; padding: 0 9px; }
+  .dashboardHeader { align-items: flex-start; }
+  .dashboardRefresh { align-items: end; }
+  .dashboardRefresh span { max-width: 130px; text-align: right; }
+  .metricGrid, .chartGrid { grid-template-columns: 1fr; }
+  .metricGrid .metricCard { min-height: 104px; }
+  .panelHeader { padding: 14px 15px; }
+  .attentionPanel { overflow: visible; }
+  .attentionPanel .tableFrame { overflow-x: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
