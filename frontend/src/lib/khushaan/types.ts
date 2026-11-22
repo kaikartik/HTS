@@ -19,12 +19,14 @@ export interface Team {
   lead_id: string;
   agent_ids: string[];
   is_active: boolean;
+  team_email?: string;
 }
 
 export interface User {
   user_id: string;
   name: string;
   email: string;
+  phone?: string;
   role: Role;
   team_id: string | null;
   is_active: boolean;

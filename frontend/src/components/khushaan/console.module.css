@@ -280,3 +280,12 @@
   .consoleShell { background: white; color: black; }
   .tableFrame, .metricCard { break-inside: avoid; border-color: #999; }
 }
+
+.adminPage { display: grid; gap: 18px; }
+.adminFilters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; border: 1px solid var(--console-line); border-radius: 8px; background: white; padding: 14px; }
+.adminFilters label { display: grid; gap: 5px; color: var(--console-muted); font-size: 10px; font-weight: 700; }
+.adminFilters input,.adminFilters select { width: 100%; height: 38px; border: 1px solid #d5dee8; border-radius: 6px; background: white; color: var(--console-ink); padding: 0 8px; font: inherit; }
+.adminForm { display: grid; gap: 12px; padding-top: 16px; }.adminForm label { display: grid; gap: 5px; color: var(--console-muted); font-size: 11px; }.adminForm input,.adminForm select { width: 100%; height: 40px; border: 1px solid var(--console-line); border-radius: 6px; background: white; color: var(--console-ink); padding: 0 9px; font: inherit; }.checkboxLabel { grid-template-columns: 18px auto; align-items: center; }.checkboxLabel input { width: 16px; height: 16px; }
+.categoryTree { display: grid; gap: 10px; }.categoryNode { border: 1px solid var(--console-line); border-radius: 8px; background: white; overflow: hidden; }.categoryRow,.categoryChild { display: grid; grid-template-columns: minmax(170px,2fr) repeat(2,minmax(100px,1fr)) 38px 38px minmax(120px,auto); align-items: center; gap: 8px; min-height: 54px; padding: 8px 12px; border-bottom: 1px solid #edf1f4; font-size: 11px; }.categoryChild { grid-template-columns: minmax(170px,2fr) repeat(2,minmax(100px,1fr)) 38px 38px; margin-left: 24px; border-bottom: 0; border-top: 1px solid #edf1f4; background: #fbfcfd; }.categoryName { border: 0; background: transparent; color: var(--console-blue); padding: 0; font: inherit; font-weight: 750; text-align: left; cursor: pointer; }
+@media (max-width: 1024px) { .adminFilters { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 640px) { .adminFilters { grid-template-columns: 1fr; }.adminPage .tableFrame { max-width: 100%; overflow-x: auto; }.adminPage .table { min-width: 720px; }.categoryNode { overflow-x: auto; }.categoryRow,.categoryChild { min-width: 620px; }.categoryChild { margin-left: 12px; } }
