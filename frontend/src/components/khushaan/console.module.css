@@ -180,6 +180,24 @@
 .ticketLink:hover { text-decoration: underline; }
 .subtleText { display: block; margin-top: 3px; color: var(--console-muted); font-size: 10px; }
 
+.ticketPage { display: grid; gap: 18px; }
+.ticketFilters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; border: 1px solid var(--console-line); border-radius: 8px; background: white; padding: 14px; }
+.ticketFilters label, .assignFields label { display: grid; gap: 5px; color: var(--console-muted); font-size: 10px; font-weight: 700; }
+.ticketFilters input, .ticketFilters select, .assignFields select { width: 100%; height: 38px; min-width: 0; border: 1px solid #d5dee8; border-radius: 6px; background: white; color: var(--console-ink); padding: 0 8px; font: inherit; }
+.ticketLinkButton { border: 0; background: transparent; color: var(--console-blue); padding: 0; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.drawerContent { display: grid; gap: 16px; overflow-y: auto; padding-top: 16px; }
+.drawerActions { display: flex; justify-content: flex-end; }
+.drawerContent > p { margin: 0; color: var(--console-muted); line-height: 1.55; }
+.drawerContent section { border-top: 1px solid var(--console-line); padding-top: 12px; }
+.drawerContent h3 { margin: 0 0 9px; font-size: 13px; }
+.ticketDetails { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.ticketDetails div { border: 1px solid var(--console-line); border-radius: 6px; padding: 9px; }
+.ticketDetails dt { color: var(--console-muted); font-size: 10px; }.ticketDetails dd { margin: 5px 0 0; font-size: 12px; }
+.timelineItem { display: grid; gap: 3px; border-left: 3px solid var(--console-blue-soft); margin: 7px 0; padding: 5px 9px; color: var(--console-muted); font-size: 11px; }.timelineItem strong { color: var(--console-ink); }
+.comment { border: 1px solid var(--console-line); border-radius: 6px; margin: 7px 0; padding: 9px 10px; }.comment strong { font-size: 11px; }.comment p { margin: 5px 0 0; font-size: 12px; }
+.internalComment { border-left: 3px solid var(--console-amber); background: #fffaf1; }
+.assignFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
 @media (max-width: 1024px) {
   .sidebar { transform: translateX(-100%); }
   .sidebarOpen { transform: translateX(0); box-shadow: 12px 0 32px rgba(16,35,56,.15); }
@@ -187,6 +205,7 @@
   .menuButton { display: inline-grid; }
   .mobileOverlay { position: fixed; z-index: 25; inset: 0; display: block; border: 0; background: rgba(20,36,55,.38); }
   .metricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ticketFilters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -214,6 +233,11 @@
   .panelHeader { padding: 14px 15px; }
   .attentionPanel { overflow: visible; }
   .attentionPanel .tableFrame { overflow-x: auto; }
+  .ticketFilters { grid-template-columns: 1fr; }
+  .ticketPage .tableFrame { max-width: 100%; overflow-x: auto; }
+  .ticketPage .table { min-width: 980px; }
+  .ticketDetails, .assignFields { grid-template-columns: 1fr; }
+  .drawerContent { max-height: calc(100dvh - 72px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

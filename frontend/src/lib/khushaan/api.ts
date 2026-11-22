@@ -2,6 +2,7 @@ import {
   mockAuditEntries,
   mockBusinessHours,
   mockCategories,
+  mockComments,
   mockFeedback,
   mockHolidays,
   mockNotificationTemplates,
@@ -10,12 +11,14 @@ import {
   mockTeams,
   mockTickets,
   mockUsers,
+  mockTicketHistory,
 } from "./mock-data";
 import { getSlaMetrics } from "./sla";
 import type {
   AuditEntry,
   BusinessHours,
   Category,
+  Comment,
   DashboardStats,
   DateRange,
   Holiday,
@@ -26,6 +29,7 @@ import type {
   Team,
   Ticket,
   TicketFilters,
+  TicketHistory,
   TicketPage,
   User,
 } from "./types";
@@ -311,4 +315,16 @@ export async function saveSettings(settings: SystemSettings): Promise<SystemSett
   await wait();
   Object.assign(mockSystemSettings, settings);
   return { ...mockSystemSettings };
+}
+
+// TODO: replace with fetch('/api/tickets/:ticketNo/comments')
+export async function listTicketComments(ticketNo: string): Promise<Comment[]> {
+  await wait();
+  return mockComments.filter((comment) => comment.ticket_no === ticketNo);
+}
+
+// TODO: replace with fetch('/api/tickets/:ticketNo/history')
+export async function listTicketHistory(ticketNo: string): Promise<TicketHistory[]> {
+  await wait();
+  return mockTicketHistory.filter((entry) => entry.ticket_no === ticketNo);
 }
