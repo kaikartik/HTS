@@ -1,0 +1,40 @@
+Name: Kartik Agnihotri
+Role / Module: Requester Portal & Knowledge Base
+Date: 18 Nov 2026
+
+1. What I Added / Modified:
+   - Cloned the repo and set up the local environment (Node, frontend dependencies)
+   - Built Requester Portal UI inside src/app/requester-agni using mock data
+   - Login, Register, Forgot password and Reset password pages with validation, show/hide password, loading states
+   - IPEC blue theme with college logo; responsive layout for mobile (compact header, bottom navigation) and desktop (sidebar)
+   - Portal shell and Home dashboard: ticket counters, quick actions, recent tickets table
+   - Reusable components: AuthLayout, TextField, PasswordInput, PrimaryButton, StatusBadge, PriorityBadge
+   - Raise a Ticket form: category/sub-category, impact and urgency with calculated priority, attachment upload with type/size validation (10 MB), KB suggestions, success screen with ticket number
+   - My Tickets list with URL-persisted search, combined filters, sorting, responsive layout and pagination; ticket detail page with not-found handling
+   - Mock API layer in _lib/requesterApi.ts so real backend APIs can be swapped in on 26 Nov
+   - 18 Nov 2026: Ticket detail page: added status history timeline, public conversation thread and reply box (internal notes hidden from requesters), closed-ticket handling, and mock data for history/replies. Pending: Knowledge Base pages, reopen ticket and CSAT rating, API integration.
+   - 18 Nov 2026: Knowledge Base: added KB search page with category filters, article page with 1-5 star helpful rating, published-only articles (drafts hidden), links from ticket form suggestions, and linked dashboard recent tickets to ticket detail pages. Pending: reopen ticket and CSAT rating, API integration, final testing.
+   - 18 Nov 2026: Reopen and CSAT: added the seven-day reopen window, automatic closure, validated reopen reasons, and one-time feedback; tested desktop and mobile layouts. Pending: API integration and final testing.
+
+2. Files Modified / Created:
+   - frontend/src/app/requester-agni/
+   - frontend/src/app/requester-agni/_lib/requesterApi.ts
+   - frontend/src/app/requester-agni/_lib/categories.ts
+   - frontend/src/app/requester-agni/_lib/mockKb.ts
+   - frontend/src/app/requester-agni/_lib/types.ts
+   - frontend/src/app/requester-agni/(portal)/tickets/page.tsx
+   - frontend/src/app/requester-agni/(portal)/tickets/[id]/page.tsx
+
+3. How to Use / Test My Part:
+   - Open /requester-agni/login and sign in to access the requester portal
+   - Use Raise a ticket from the Home page or sidebar to submit a support request
+   - Open /requester-agni/tickets to search, filter and sort; open a ticket number or subject for details
+   - Ticket data is mocked and saved in localStorage; Home counters and recent tickets include created tickets
+
+Pending:
+- Knowledge Base search and article pages, final API integration, testing
+
+Questions / blockers for the team:
+- Need API.md with endpoints, JSON shapes and the login/token approach
+- Final mandatory ticket form fields (employee ID, department, phone, location)
+- ESLint peer-dependency conflict in frontend (eslint-config-next 14 vs ESLint 9)
