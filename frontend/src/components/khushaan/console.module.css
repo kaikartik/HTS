@@ -209,6 +209,23 @@
 .priorityMix { white-space: nowrap; font-size: 11px; }.loadTrack { width: 100%; height: 8px; min-width: 70px; overflow: hidden; border-radius: 5px; background: #edf1f5; }.loadTrack span { display: block; height: 100%; border-radius: inherit; background: var(--console-teal); }
 .quickAgentSelect { position: fixed; z-index: 50; right: 24px; bottom: 24px; width: 220px; border: 1px solid var(--console-line); border-radius: 8px; background: white; box-shadow: 0 10px 28px rgba(16,35,56,.16); padding: 12px; }.quickAgentSelect label { display: grid; gap: 6px; color: var(--console-muted); font-size: 10px; }
 
+.reportPage { display: grid; gap: 18px; }
+.reportHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.reportActions { display: flex; gap: 8px; }
+.reportControls { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; border: 1px solid var(--console-line); border-radius: 8px; background: white; padding: 14px 16px; }
+.fieldError { width: 100%; margin: 0; color: var(--console-red); font-size: 11px; }.reportRange { margin: 0; color: var(--console-muted); font-size: 11px; }
+.reportMetricGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.reportBreakdowns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.reportTickets { border: 1px solid var(--console-line); border-radius: 8px; overflow: hidden; background: white; }.reportTickets .tableFrame { border-width: 1px 0 0; border-radius: 0; }
+.reportTickets .table { min-width: 760px; }
+@media (max-width: 1024px) { .reportMetricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .reportHeader { align-items: flex-start; }.reportActions { display: grid; }.reportMetricGrid,.reportBreakdowns { grid-template-columns: 1fr; }.reportControls { align-items: stretch; }.reportPage .tableFrame { max-width: 100%; overflow-x: auto; }
+}
+@media print {
+  .reportActions,.reportControls,.reportHeader .pageEyebrow { display: none !important; }.reportPage { gap: 12px; }.reportMetricGrid { grid-template-columns: repeat(3, 1fr); }.reportBreakdowns { grid-template-columns: 1fr 1fr; }.reportPage .tableFrame { overflow: visible; }.reportPage .table { min-width: 0; font-size: 9px; }.reportPage .table td,.reportPage .table th { padding: 6px; }
+}
+
 @media (max-width: 1024px) {
   .sidebar { transform: translateX(-100%); }
   .sidebarOpen { transform: translateX(0); box-shadow: 12px 0 32px rgba(16,35,56,.15); }
