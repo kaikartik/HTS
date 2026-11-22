@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // 1. User Registration (FR-01)
 exports.register = async (req, res) => {
@@ -47,6 +48,11 @@ exports.login = async (req, res) => {
             return res.status(400).json({ error: 'Please provide email and password.' });
         }
 
+        // JWT must be configured (see backend/.env.example)
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ error: 'Server authentication configuration is missing.' });
+        }
+
         // Find user by email
         const [users] = await db.query('SELECT * FROM USER WHERE email = ?', [email]);
         if (users.length === 0) {
@@ -66,9 +72,17 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: 'Invalid email or password.' });
         }
 
+        // Signed JWT used by protected routes (Agent workspace etc.)
+        const token = jwt.sign(
+            { user_id: user.user_id, role_id: user.role_id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
         // Success response (Exclude password hash from sent data)
         res.json({
             message: 'Login successful!',
+            token,
             user: {
                 user_id: user.user_id,
                 name: user.name,

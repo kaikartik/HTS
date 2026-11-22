@@ -1,0 +1,269 @@
+=============================================================================
+DEVELOPER LOG: Kanishka Sharma (Agent Workspace)
+PROJECT: Helpdesk Ticketing System (HTS) - Version 1.0
+ROLE: Frontend Developer - Agent Workspace
+BRANCH: feature/agent-workspace
+=============================================================================
+
+#############################################################################
+PART A - WORK DONE, DATE-WISE
+#############################################################################
+
+-----------------------------------------------------------------------------
+DATE: 21 November 2026  |  Session 1 - First Agent Workspace UI
+-----------------------------------------------------------------------------
+1.  Created the agent route folder frontend/src/app/agent-kani.
+2.  Built the dashboard layout: dark sidebar, header, responsive page container.
+3.  Added four statistics cards (total, open, in progress, resolved).
+4.  Built the ticket table: ticket number, subject, requester, priority, status, date.
+5.  Added a live search box for the ticket list.
+6.  Added colour-coded priority and status badges.
+7.  Added loading, empty-list and error states.
+8.  Connected the first version of the list to GET /api/tickets.
+
+-----------------------------------------------------------------------------
+DATE: 21 November 2026  |  Session 2 - Secure login for agents (JWT)
+-----------------------------------------------------------------------------
+9.  Installed and configured JWT authentication for secure API access.
+10. Updated the login controller so login returns a signed JWT token.
+11. Created authentication middleware to verify tokens and check active user accounts.
+12. Implemented Agent role-based access verification (requireAgent).
+13. Developed the protected endpoint GET /api/tickets/assigned.
+14. Updated the ticket controller to fetch tickets using the authenticated agent's user ID.
+15. Connected the assigned-ticket endpoint to the ticket routes.
+16. Tested agent login and protected API access successfully.
+17. Assigned a local development ticket to Agent Kanishka Sharma and verified its retrieval.
+
+-----------------------------------------------------------------------------
+DATE: 21 November 2026  |  Session 3 - Complete Agent Workspace (backend + frontend)
+-----------------------------------------------------------------------------
+BACKEND  (new files: controllers/agentController.js, routes/agentRoutes.js, mounted at /api/agent)
+18. Ticket queue API: my tickets and unassigned team tickets, sorted by priority then age.
+19. Ticket detail API: ticket, requester details, SLA info, comments (incl. private notes),
+    attachments, audit history, and what the agent is allowed to do.
+20. Claim / release API (self-assign a team ticket; give a New/Open ticket back).
+    New ticket becomes Open when it gets assigned (SRS 7.3). Row-locked so two agents
+    cannot claim the same ticket.
+21. Conversation API: public reply and private internal note. First public reply sets
+    first_response_at and notifies the requester.
+22. Status API with SRS 7.3 rules. Resolving needs a solution message. Agents cannot
+    Close or Reopen (requester / system job). On Hold stores hold_started_at and
+    paused_minutes.
+23. Priority override API with a mandatory reason (FR-14).
+24. Raise-a-ticket-on-behalf API for phone / walk-in requests (FR-11).
+25. Attachment download API (blocks ../ path tricks, checks ticket access).
+26. In-app notification APIs (list, unread count, mark read) (FR-27).
+27. Knowledge Base APIs: list, read, create, edit, save draft, publish, and
+    "create draft from resolved ticket" (FR-30, FR-32).
+28. Every status / assignee / priority change is written to TICKET_HISTORY (FR-19).
+29. Added scripts/seedAgentDemo.js (demo agent, requester, 5 tickets, comments,
+    attachment, notifications) and tests/agentSmoke.js (29 automated checks).
+
+FRONTEND  (frontend/src/app/agent-kani/)
+30. Agent login page (/agent-kani/login). Token kept in sessionStorage, auto sign-out
+    after 30 idle minutes (NFR-04), redirect to login when the token expires.
+31. Shared layout: sidebar, route guard, sign-out, notification bell (unread badge,
+    30-second refresh, click opens the ticket).
+32. Overview / ticket queue: My Tickets and Team Queue tabs, statistic cards,
+    search, status / priority / category / date-range filters, 25 rows per page,
+    colour-coded SLA badges (breached, overdue, 75% warning, time left, paused),
+    Claim button, "New ticket for requester" button.
+33. Ticket detail page: description, requester details, SLA dates, conversation thread
+    (requester vs agent, private notes highlighted), Public reply / Private note
+    composer with canned responses (FR-21), status buttons (only allowed
+    transitions), priority override, claim / release, attachments with View and
+    Download, audit history, "Create Knowledge Base draft" for resolved tickets.
+34. New ticket page for requesters who phone or walk in (FR-11).
+35. Knowledge Base page: my articles / all published, search, category filter,
+    create, edit, save draft, publish, read-only view of other authors' articles.
+36. Breadcrumb navigation (SRS 4.1); all 7 SRS statuses styled.
+
+FIXES
+37. ticketController.getTickets: the SQL query was missing the SELECT keyword - fixed.
+38. authController.js: kept as a minimal JWT-only change (no reformatting) so it
+    merges cleanly with Kartik Saxena's work.
+39. Removed the empty agentAuthController.js and restored frontend/src/app/page.tsx
+    (it belongs to the root app, not to the agent module).
+40. Added .gitattributes (LF line endings) to stop whole-file CRLF changes in git.
+41. Added backend/.env.example and ignored backend/uploads/ in .gitignore.
+
+#############################################################################
+PART B - FILES CREATED / MODIFIED
+#############################################################################
+NEW
+  backend/controllers/agentController.js
+  backend/routes/agentRoutes.js
+  backend/middleware/authMiddleware.js
+  backend/scripts/seedAgentDemo.js
+  backend/tests/agentSmoke.js
+  backend/.env.example
+  .gitattributes
+  frontend/src/app/agent-kani/layout.tsx
+  frontend/src/app/agent-kani/login/page.tsx
+  frontend/src/app/agent-kani/tickets/[id]/page.tsx
+  frontend/src/app/agent-kani/tickets/new/page.tsx
+  frontend/src/app/agent-kani/kb/page.tsx
+  frontend/src/app/agent-kani/lib/api.ts
+  frontend/src/app/agent-kani/lib/canned.ts
+  frontend/src/app/agent-kani/components/Breadcrumb.tsx
+  frontend/src/app/agent-kani/components/NotificationBell.tsx
+MODIFIED
+  frontend/src/app/agent-kani/page.tsx           (queue / overview)
+  backend/server.js                              (+2 lines: mounts /api/agent)      [shared file]
+  backend/controllers/authController.js          (login returns JWT token)          [shared file]
+  backend/controllers/ticketController.js        (getAssignedTickets, SELECT fix)   [shared file]
+  backend/routes/ticketRoutes.js                 (GET /assigned)                    [shared file]
+  backend/package.json                           (jsonwebtoken, script test:agent)  [shared file]
+  .gitignore                                     (+ backend/uploads/)
+REMOVED
+  backend/controllers/agentAuthController.js     (was empty)
+
+#############################################################################
+PART C - SRS / PROJECT PLAN COVERAGE (Agent Workspace, plan section 3.4)
+#############################################################################
+Plan item                                              Status   Where
+-----------------------------------------------------  -------  ------------------------------
+Agent Workspace interface                              DONE     /agent-kani/*
+Ticket queue for L1/L2 agents                          DONE     Overview page
+Detailed ticket pages (description, requester,         DONE     /agent-kani/tickets/[id]
+  priority, assignment)
+Conversation threads                                   DONE     ticket detail
+Public replies (FR-17)                                 DONE     ticket detail
+Private internal notes, never visible to requester     DONE     is_internal flag (see Part F)
+  (FR-17, NFR-06)
+Ticket status update controls (FR-18)                  DONE     PATCH /status
+Permitted assignment / management options              DONE     claim, release, priority
+Attachment viewing and downloading (FR-12)             DONE     View + Download buttons
+Knowledge Base drafting (FR-30, FR-32)                 DONE     /agent-kani/kb
+Knowledge Base search (plan task 13)                   DONE     KB page search + category
+Backend API integration                                DONE     all pages use /api/agent/*
+Testing and final improvements                         DONE*    npm run test:agent (*see Part E)
+Extra SRS items for agents
+  Raise ticket on behalf of requester (FR-11)          DONE
+  Priority override with reason (FR-14)                DONE
+  Audit trail of every change (FR-19)                  DONE
+  In-app notifications for agents (FR-27)              DONE     (needs other modules, Part F)
+  Search / filter by number, keyword, status,          DONE     queue page
+    priority, category, date range (FR-29)
+  Canned responses (FR-21, low priority)               DONE
+  Breached tickets flagged in lists (FR-25)            DONE     SLA badge
+  Breadcrumbs, 25 rows/page, responsive (SRS 4.1)      DONE
+
+#############################################################################
+PART D - HOW TO RUN AND TEST MY PART  (for the whole team)
+#############################################################################
+1. Pull the branch. In backend/ run:  npm install
+2. Copy backend/.env.example to backend/.env and fill the values.
+   IMPORTANT: JWT_SECRET is now REQUIRED. Without it POST /api/auth/login
+   answers "Server authentication configuration is missing." for EVERYONE.
+3. Load schema.sql in MySQL (as before).
+4. Optional demo data:   cd backend && node scripts/seedAgentDemo.js
+5. Start backend:        cd backend && npm run dev          (http://localhost:5000)
+6. Start frontend:       cd frontend && npm run dev         (http://localhost:3000)
+7. Open http://localhost:3000/agent-kani
+   Demo agent login:     kanishka.agent@hts.local  /  Agent@123
+   Demo requester login: demo.requester@hts.local  /  Requester@123
+8. Automated API checks (no MySQL needed):  cd backend && npm run test:agent
+9. Optional: frontend/.env.local with NEXT_PUBLIC_API_URL=http://localhost:5000
+   (that is already the default).
+
+Manual test path: login -> Team Queue -> Claim ticket -> open it -> New -> Open ->
+In Progress -> add public reply and private note -> On Hold -> back to In Progress ->
+Resolved (solution message) -> Create Knowledge Base draft -> Publish.
+
+#############################################################################
+PART E - API REFERENCE  (all need header  Authorization: Bearer <token>  and Agent role)
+#############################################################################
+POST /api/auth/login                      { email, password } -> { message, token, user }  (token valid 1 hour)
+
+Base URL: /api/agent
+GET    /me                                my profile and team
+GET    /tickets?scope=mine|team           queue (mine = assigned to me, team = unassigned in my team)
+POST   /tickets                           raise on behalf: { requester_email, subject, description,
+                                          category_id, priority, channel: Phone|Walk-in }
+GET    /tickets/:id                       { ticket, comments, attachments, history, permissions }
+POST   /tickets/:id/claim                 assign an unassigned team ticket to me (New -> Open)
+POST   /tickets/:id/release               give a New/Open ticket back to the team
+POST   /tickets/:id/comments              { body, is_internal }
+PATCH  /tickets/:id/status                { status, note }   note required for Resolved
+PATCH  /tickets/:id/priority              { priority, reason }
+POST   /tickets/:id/kb-draft              resolved ticket -> draft KB article
+GET    /attachments/:id/download          file download
+GET    /notifications                     { unread_count, items }
+POST   /notifications/read                { id } for one, empty body for all
+GET    /categories
+GET    /kb?scope=mine|published           POST /kb   { title, content, category_id, status }
+GET    /kb/:id                            PUT /kb/:id  (own articles only)
+Also kept: GET /api/tickets/assigned (my first endpoint, same data as scope=mine).
+
+Allowed agent status changes (SRS 7.3):
+  New -> Open | Open -> In Progress | In Progress -> On Hold or Resolved |
+  On Hold -> In Progress | Reopened -> In Progress.
+  Closing and reopening are done by the requester / the 7-day auto-close job.
+
+#############################################################################
+PART F - NOTES FOR TEAMMATES  (things they must do or know)
+#############################################################################
+ALL:
+  - Add JWT_SECRET to your own backend/.env (see Part D, step 2). Never commit .env.
+  - Line endings are now fixed with .gitattributes. If git shows a whole file as
+    changed, run:  git add --renormalize .
+
+KARTIK SAXENA (backend / auth / DB):
+  - authController.login now returns { token, user }. Please keep this when you merge.
+  - FR-03 (15-minute lockout) and FR-07 (profile) are in your module; not touched by me.
+  - Attachment files are read from backend/<UPLOAD_DIR or "uploads">/<ATTACHMENT.file_path>.
+    When the requester upload API is built, save files there and store the relative
+    file name in ATTACHMENT.file_path so agents can View / Download them.
+
+KETAN TRIPATHI (workflow / SLA):
+  - Auto-assignment (FR-15) is yours. Until it exists, new tickets stay unassigned
+    and appear in the agents' "Team Queue", where an agent can Claim them.
+  - My status API only does simple wall-clock minutes for On Hold (hold_started_at,
+    paused_minutes). Replace with business-hour logic if you want.
+  - Priority override recalculates response_due / resolution_due as created_at +
+    SLA minutes (same as createTicket). Your SLA engine should take over later.
+  - The queue shows SLA badges from is_breached, warned_75, response_due,
+    resolution_due, first_response_at. Keep setting those columns (75% warning,
+    breach, escalated_at).
+  - Notifications for agents (FR-27): to alert an agent about a new assignment or an
+    SLA warning, just INSERT a row into NOTIFICATIONS (user_id = agent, ticket_id,
+    message). The agent's bell shows it automatically.
+
+KARTIK AGNIHOTRI (requester portal / KB):
+  - NFR-06: every requester API that returns comments MUST filter  is_internal = FALSE.
+    Agents' private notes are stored with is_internal = TRUE.
+  - Knowledge Base: agents save articles with status 'Draft' or 'Published'.
+    Requester KB search must only return status = 'Published'.
+  - When a requester replies to a ticket, INSERT a NOTIFICATIONS row for the assignee
+    (message like "The requester replied on ticket HD-...") so the agent sees it.
+  - My agent screens use the same status colours and SLA badge idea; feel free to reuse
+    lib/api.ts helpers (statusStyle, priorityStyle, formatDate) for consistency.
+
+KHUSHAAN IRSHAD (supervisor / admin):
+  - Supervisors will need assign / re-assign / merge (FR-16); the agent side only
+    claims and releases. Tickets assigned by a supervisor appear in the agent's
+    "My Tickets" automatically (assignee_id).
+  - Escalated tickets: escalated_at is shown in the agent's ticket details.
+
+#############################################################################
+PART G - KNOWN LIMITATIONS (not part of this version)
+#############################################################################
+  - Agents cannot upload files with a reply (needs a file-upload library such as
+    multer and a shared upload API) - agents can only View / Download attachments.
+  - FR-21 "link related tickets" is not done (needs a new table). Canned
+    responses are done.
+  - KB tags (FR-30) are not stored: KB_ARTICLE has no tags column.
+  - Email notifications (FR-26) belong to the backend/mail module.
+  - Agent API tests use a fake in-memory database. Run the manual test path in
+    Part D on real MySQL before the demo.
+
+#############################################################################
+CURRENT STATUS
+#############################################################################
+Agent Workspace module is complete for Version 1.0 scope: all screens and backend
+endpoints are done; automated API checks pass (29/29); TypeScript and ESLint are clean.
+
+NEXT TASK:
+Phase 4 - integration with the other modules on main, system testing together with
+the team, and fixes after review. Final demo preparation for 30 November 2026.

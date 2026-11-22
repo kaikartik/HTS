@@ -1,4 +1,4 @@
-const db = require('../config/db');
+﻿const db = require('../config/db');
 const { istDateKey } = require('../utils/businessTime');
 const { derivePriority, isValidPriority } = require('../utils/priority');
 const { computeDueDates, computeSlaStatus } = require('../utils/sla');
@@ -143,51 +143,90 @@ exports.createTicket = async (req, res) => {
 
 // 2. List tickets. Optional filters: status, priority, assignee_id, requester_id, team_id, q (search)
 exports.getTickets = async (req, res) => {
-    try {
-        const { status, priority, assignee_id, requester_id, team_id, q } = req.query;
-        const where = [];
-        const params = [];
-        if (status) { where.push('T.status = ?'); params.push(status); }
-        if (priority) { where.push('T.priority = ?'); params.push(priority); }
-        if (assignee_id) { where.push('T.assignee_id = ?'); params.push(assignee_id); }
-        if (requester_id) { where.push('T.requester_id = ?'); params.push(requester_id); }
-        if (team_id) { where.push('T.team_id = ?'); params.push(team_id); }
-        if (q) { where.push('(T.ticket_no LIKE ? OR T.subject LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
+  try {
+    const { status, priority, assignee_id, requester_id, team_id, q } = req.query
+    const where = []
+    const params = []
+    if (status) { where.push('T.status = ?'); params.push(status) }
+    if (priority) { where.push('T.priority = ?'); params.push(priority) }
+    if (assignee_id) { where.push('T.assignee_id = ?'); params.push(assignee_id) }
+    if (requester_id) { where.push('T.requester_id = ?'); params.push(requester_id) }
+    if (team_id) { where.push('T.team_id = ?'); params.push(team_id) }
+    if (q) { where.push('(T.ticket_no LIKE ? OR T.subject LIKE ?)'); params.push(`%${q}%`, `%${q}%`) }
 
-        const [rows] = await db.query(
-            `${TICKET_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY T.created_at DESC, T.ticket_id DESC`,
-            params
-        );
-        const businessCalendar = await loadBusinessCalendar(db);
-        res.json(rows.map((row) => withSla(row, businessCalendar)));
-    } catch (err) {
-        console.error('Fetch tickets error:', err);
-        res.status(500).json({ error: 'Server error while fetching tickets.' });
-    }
-};
+    const [rows] = await db.query(
+      `${TICKET_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY T.created_at DESC, T.ticket_id DESC`,
+      params
+    )
+    const businessCalendar = await loadBusinessCalendar(db)
+    res.json(rows.map((row) => withSla(row, businessCalendar)))
+  } catch (err) {
+    console.error('Fetch tickets error:', err)
+    res.status(500).json({ error: 'Server error while fetching tickets.' })
+  }
+}
 
 // 3. One ticket with its history (audit trail)
 exports.getTicketById = async (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0) {
-        return res.status(400).json({ error: 'Ticket id must be a number.' });
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Ticket id must be a number.' })
+  }
+  try {
+    const [rows] = await db.query(`${TICKET_SELECT} WHERE T.ticket_id = ?`, [id])
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket not found.' })
     }
-    try {
-        const [rows] = await db.query(`${TICKET_SELECT} WHERE T.ticket_id = ?`, [id]);
-        if (rows.length === 0) {
-            return res.status(404).json({ error: 'Ticket not found.' });
-        }
-        const [history] = await db.query(
-            `SELECT H.history_id, H.field_name, H.old_value, H.new_value, H.changed_at, U.name AS changed_by_name
-             FROM TICKET_HISTORY H
-             JOIN USER U ON H.changed_by = U.user_id
-             WHERE H.ticket_id = ?
-             ORDER BY H.history_id ASC`,
-            [id]
-        );
-        res.json({ ...withSla(rows[0], await loadBusinessCalendar(db)), history });
-    } catch (err) {
-        console.error('Fetch ticket error:', err);
-        res.status(500).json({ error: 'Server error while fetching the ticket.' });
-    }
-};
+    const [history] = await db.query(
+      `SELECT H.history_id, H.field_name, H.old_value, H.new_value, H.changed_at, U.name AS changed_by_name
+       FROM TICKET_HISTORY H
+       JOIN USER U ON H.changed_by = U.user_id
+       WHERE H.ticket_id = ?
+       ORDER BY H.history_id ASC`,
+      [id]
+    )
+    res.json({ ...withSla(rows[0], await loadBusinessCalendar(db)), history })
+  } catch (err) {
+    console.error('Fetch ticket error:', err)
+    res.status(500).json({ error: 'Server error while fetching the ticket.' })
+  }
+}
+
+// 4. Get Tickets Assigned to the Logged-in Agent
+exports.getAssignedTickets = async (req, res) => {
+  try {
+    const agentId = req.user.user_id
+
+    const [tickets] = await db.query(`
+      SELECT
+        T.ticket_id,
+        T.ticket_no,
+        T.subject,
+        T.description,
+        T.status,
+        T.priority,
+        T.assignee_id,
+        T.requester_id,
+        U.name AS requester_name,
+        TM.team_name,
+        C.name AS category_name,
+        T.created_at,
+        T.response_due,
+        T.resolution_due,
+        T.is_breached
+      FROM TICKET T
+      JOIN USER U ON T.requester_id = U.user_id
+      JOIN TEAM TM ON T.team_id = TM.team_id
+      JOIN CATEGORY C ON T.category_id = C.category_id
+      WHERE T.assignee_id = ?
+      ORDER BY T.created_at DESC
+    `, [agentId])
+
+    return res.json(tickets)
+  } catch (err) {
+    console.error('Fetch assigned tickets error:', err)
+    return res.status(500).json({
+      error: 'Server error while fetching assigned tickets.'
+    })
+  }
+}
