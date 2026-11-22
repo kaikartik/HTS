@@ -100,6 +100,7 @@ export function ConsoleShell({ area, children }: { area: Area; children: React.R
 
   return (
     <div className={styles.consoleShell}>
+      <a className={styles.skipLink} href="#console-main-content">Skip to main content</a>
       {mobileOpen && <button aria-label={strings.shell.menuClose} className={styles.mobileOverlay} onClick={() => setMobileOpen(false)} type="button" />}
       <aside aria-label={strings.brand.name} className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.sidebarHeader}><Link aria-label={strings.brand.name} className={styles.logoLockup} href="/supervisor-khus/dashboard" onClick={() => setMobileOpen(false)}><IpecLogo /></Link></div>
@@ -178,7 +179,7 @@ export function ConsoleShell({ area, children }: { area: Area; children: React.R
             </div>
           </div>
         </header>
-        <main className={styles.mainContent}>
+        <main className={styles.mainContent} id="console-main-content">
           <p className={styles.breadcrumb}>{area === "supervisor" ? strings.shell.supervisorSection : strings.shell.adminSection}</p>
           {children}
         </main>
