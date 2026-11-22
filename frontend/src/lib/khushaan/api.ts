@@ -1,8 +1,12 @@
 import {
   mockAuditEntries,
+  mockBusinessHours,
   mockCategories,
   mockFeedback,
+  mockHolidays,
+  mockNotificationTemplates,
   mockSlaPolicies,
+  mockSystemSettings,
   mockTeams,
   mockTickets,
   mockUsers,
@@ -10,11 +14,15 @@ import {
 import { getSlaMetrics } from "./sla";
 import type {
   AuditEntry,
+  BusinessHours,
   Category,
   DashboardStats,
   DateRange,
+  Holiday,
+  NotificationTemplate,
   ReportData,
   SlaPolicy,
+  SystemSettings,
   Team,
   Ticket,
   TicketFilters,
@@ -234,4 +242,73 @@ export async function getReport(range: DateRange): Promise<ReportData> {
     },
     tickets,
   };
+}
+
+// TODO: replace with fetch('/api/business-hours')
+export async function getBusinessHours(): Promise<BusinessHours> {
+  await wait();
+  return { ...mockBusinessHours, working_days: [...mockBusinessHours.working_days] };
+}
+
+// TODO: replace with fetch('/api/business-hours') using PUT or PATCH
+export async function saveBusinessHours(hours: BusinessHours): Promise<BusinessHours> {
+  await wait();
+  mockBusinessHours.timezone = hours.timezone;
+  mockBusinessHours.working_days = [...hours.working_days];
+  mockBusinessHours.opens_at = hours.opens_at;
+  mockBusinessHours.closes_at = hours.closes_at;
+  return { ...mockBusinessHours, working_days: [...mockBusinessHours.working_days] };
+}
+
+// TODO: replace with fetch('/api/holidays')
+export async function listHolidays(): Promise<Holiday[]> {
+  await wait();
+  return [...mockHolidays];
+}
+
+// TODO: replace with fetch('/api/holidays') using POST or PATCH
+export async function saveHoliday(holiday: Holiday): Promise<Holiday> {
+  await wait();
+  if (mockHolidays.some((item) => item.holiday_id !== holiday.holiday_id && item.holiday_date === holiday.holiday_date)) {
+    throw new Error("A holiday already exists on this date");
+  }
+  const index = mockHolidays.findIndex((item) => item.holiday_id === holiday.holiday_id);
+  if (index < 0) mockHolidays.push(holiday);
+  else mockHolidays[index] = holiday;
+  return holiday;
+}
+
+// TODO: replace with fetch('/api/holidays/:holidayId') using DELETE
+export async function deleteHoliday(holidayId: string): Promise<void> {
+  await wait();
+  const index = mockHolidays.findIndex((item) => item.holiday_id === holidayId);
+  if (index >= 0) mockHolidays.splice(index, 1);
+}
+
+// TODO: replace with fetch('/api/notification-templates')
+export async function listNotificationTemplates(): Promise<NotificationTemplate[]> {
+  await wait();
+  return [...mockNotificationTemplates];
+}
+
+// TODO: replace with fetch('/api/notification-templates/:templateId')
+export async function saveNotificationTemplate(template: NotificationTemplate): Promise<NotificationTemplate> {
+  await wait();
+  const index = mockNotificationTemplates.findIndex((item) => item.template_id === template.template_id);
+  if (index < 0) mockNotificationTemplates.push(template);
+  else mockNotificationTemplates[index] = template;
+  return template;
+}
+
+// TODO: replace with fetch('/api/settings')
+export async function getSettings(): Promise<SystemSettings> {
+  await wait();
+  return { ...mockSystemSettings };
+}
+
+// TODO: replace with fetch('/api/settings') using PUT or PATCH
+export async function saveSettings(settings: SystemSettings): Promise<SystemSettings> {
+  await wait();
+  Object.assign(mockSystemSettings, settings);
+  return { ...mockSystemSettings };
 }

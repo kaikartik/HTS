@@ -5,6 +5,10 @@ export interface SlaMetrics {
   state: SlaState;
   remaining_business_minutes: number;
   elapsed_business_minutes: number;
+  first_response_percent_elapsed: number;
+  first_response_state: SlaState;
+  first_response_remaining_minutes: number;
+  first_response_elapsed_minutes: number;
 }
 
 export interface BusinessHoursConfig {
@@ -80,11 +84,33 @@ export function getSlaMetrics(
       ? "warning"
       : "ok";
 
+  const responseEnd = ticket.first_response_at ? new Date(ticket.first_response_at) : now;
+  // The real backend can replace these client-derived values; keep response_due as the integration contract.
+  const responseElapsed = policy.uses_business_hours && policy.priority !== "Critical"
+    ? countBusinessMinutes(createdAt, responseEnd, businessHours)
+    : Math.max(0, (responseEnd.getTime() - createdAt.getTime()) / 60_000);
+  const responsePercent = policy.response_minutes > 0
+    ? (responseElapsed / policy.response_minutes) * 100
+    : 0;
+  const responseDue = new Date(ticket.response_due);
+  const responseBreached = ticket.first_response_at
+    ? new Date(ticket.first_response_at).getTime() > responseDue.getTime()
+    : now.getTime() > responseDue.getTime();
+  const firstResponseState: SlaState = responseBreached || responsePercent >= 100
+    ? "breached"
+    : responsePercent >= 75
+      ? "warning"
+      : "ok";
+
   return {
     percent_elapsed: Math.min(100, Math.round(percent)),
     state,
     remaining_business_minutes: Math.max(0, policy.resolution_minutes - elapsed),
     elapsed_business_minutes: elapsed,
+    first_response_percent_elapsed: Math.min(100, Math.round(responsePercent)),
+    first_response_state: firstResponseState,
+    first_response_remaining_minutes: Math.max(0, policy.response_minutes - Math.floor(responseElapsed)),
+    first_response_elapsed_minutes: Math.floor(responseElapsed),
   };
 }
 

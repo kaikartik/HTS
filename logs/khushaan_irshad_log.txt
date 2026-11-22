@@ -40,4 +40,13 @@ DATE: November 19, 2026
 	- Shared frontend owner: add navigation links to '/supervisor-khus/...' and '/admin-khus/...', and provide the approved IPEC logo asset.
 	- Team: review shared design tokens/components for consolidation after feature branches integrate.
 	- No dependencies were added. CSV export is native; PDF export uses the browser print dialog.
+
+6. PHASE 0 - November 22, 2026:
+	- Added root redirects from '/supervisor-khus' and '/admin-khus' to their dashboard routes.
+	- Added Admin-only route protection in ConsoleShell; Supervisors see only Supervisor navigation and receive an access-denied card for admin URLs.
+	- Added mock business-hours, holiday, notification-template, and system-settings APIs with TODO endpoint comments.
+	- Extended SLA metrics with first-response elapsed, remaining, percent, warning and breach fields; backend values remain an integration replacement point.
+	- Added CSV spreadsheet-formula injection protection for =, +, -, and @ prefixes.
+	- npm TypeScript check, ESLint and Next.js production build pass. Browser redirects work; dashboard 404s remain expected until Phase 1 and Phase 6 pages are implemented.
+	- No dependencies or files outside the permitted Phase 0 paths were added.
 =============================================================================

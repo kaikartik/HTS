@@ -1,9 +1,13 @@
 import type {
   AuditEntry,
+  BusinessHours,
   Category,
   Comment,
   Feedback,
+  Holiday,
+  NotificationTemplate,
   SlaPolicy,
+  SystemSettings,
   Team,
   Ticket,
   TicketHistory,
@@ -204,3 +208,38 @@ export const mockAuditEntries: AuditEntry[] = Array.from({ length: 20 }, (_, ind
   details: `Audit event ${index + 1} recorded by the support console.`,
   created_at: new Date(now - index * 3 * 60 * 60_000).toISOString(),
 }));
+
+export const mockHolidays: Holiday[] = [
+  { holiday_id: "holiday-1", holiday_name: "New Year's Day", holiday_date: "2026-01-01" },
+  { holiday_id: "holiday-2", holiday_name: "Republic Day", holiday_date: "2026-01-26" },
+  { holiday_id: "holiday-3", holiday_name: "Labour Day", holiday_date: "2026-05-01" },
+  { holiday_id: "holiday-4", holiday_name: "Independence Day", holiday_date: "2026-08-15" },
+  { holiday_id: "holiday-5", holiday_name: "Gandhi Jayanti", holiday_date: "2026-10-02" },
+  { holiday_id: "holiday-6", holiday_name: "Diwali", holiday_date: "2026-10-24" },
+  { holiday_id: "holiday-7", holiday_name: "Christmas", holiday_date: "2026-12-25" },
+];
+
+export const mockBusinessHours: BusinessHours = {
+  timezone: "Asia/Kolkata",
+  working_days: [1, 2, 3, 4, 5],
+  opens_at: "09:00",
+  closes_at: "18:00",
+};
+
+export const mockNotificationTemplates: NotificationTemplate[] = [
+  { template_id: "template-1", template_name: "Ticket Created", event_key: "ticket_created", subject: "New ticket {ticket_no}", body: "Dear {requester_name},\n\nYour ticket {ticket_no} has been created successfully.\n\nStatus: {status}", is_active: true },
+  { template_id: "template-2", template_name: "Ticket Updated", event_key: "ticket_updated", subject: "Update on ticket {ticket_no}", body: "Dear {requester_name},\n\nYour ticket {ticket_no} is now {status}.\n\nThank you,\nIPEC Helpdesk", is_active: true },
+  { template_id: "template-3", template_name: "Ticket Resolved", event_key: "ticket_resolved", subject: "Ticket {ticket_no} resolved", body: "Dear {requester_name},\n\nTicket {ticket_no} has been resolved.\n\nThank you,\nIPEC Helpdesk", is_active: true },
+];
+
+export const mockSystemSettings: SystemSettings = {
+  support_mailbox: "helpdesk@ipec.edu",
+  smtp_host: "smtp.ipec.edu",
+  smtp_port: 587,
+  smtp_username: "helpdesk@ipec.edu",
+  smtp_password_configured: true,
+  ldap_host: "",
+  ldap_port: 389,
+  ldap_base_dn: "",
+  ldap_bind_password_configured: false,
+};

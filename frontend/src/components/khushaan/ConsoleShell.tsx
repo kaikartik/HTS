@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { mockSlaPolicies, mockTickets } from "@/lib/khushaan/mock-data";
-import { canAccessConsole, useCurrentUser } from "@/lib/khushaan/auth-stub";
+import { canAccessAdmin, canAccessConsole, useCurrentUser } from "@/lib/khushaan/auth-stub";
 import { getSlaMetrics } from "@/lib/khushaan/sla";
 import { strings } from "@/lib/khushaan/strings";
 import type { Role } from "@/lib/khushaan/types";
@@ -85,13 +85,13 @@ export function ConsoleShell({ area, children }: { area: Area; children: React.R
     router.push(nextRole === "Admin" ? "/admin-khus/dashboard" : "/supervisor-khus/dashboard");
   }
 
-  if (!canAccessConsole(role)) {
+  if (!canAccessConsole(role) || (area === "admin" && !canAccessAdmin(role))) {
     return (
       <div className={styles.consoleShell}>
         <main className={styles.mainContent}>
           <section aria-labelledby="access-denied-title" className={styles.accessDenied}>
             <h1 id="access-denied-title">{strings.common.accessDeniedTitle}</h1>
-            <p>{strings.common.accessDeniedDescription}</p>
+            <p>{area === "admin" ? "This console is restricted to administrators." : strings.common.accessDeniedDescription}</p>
           </section>
         </main>
       </div>
@@ -116,18 +116,20 @@ export function ConsoleShell({ area, children }: { area: Area; children: React.R
               ))}
             </ul>
           </section>
-          <section className={styles.navSection}>
-            <h2 className={styles.navSectionTitle}>{strings.shell.adminSection}</h2>
-            <ul className={styles.navList}>
-              {navigation.admin.map((item) => (
-                <li key={item.path}>
-                  <Link aria-current={pathname === item.path || pathname.startsWith(`${item.path}/`) ? "page" : undefined} className={`${styles.navLink} ${pathname === item.path || pathname.startsWith(`${item.path}/`) ? styles.activeLink : ""}`} href={item.path} onClick={() => setMobileOpen(false)}>
-                    <NavIcon name={item.icon} />{item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {canAccessAdmin(role) && (
+            <section className={styles.navSection}>
+              <h2 className={styles.navSectionTitle}>{strings.shell.adminSection}</h2>
+              <ul className={styles.navList}>
+                {navigation.admin.map((item) => (
+                  <li key={item.path}>
+                    <Link aria-current={pathname === item.path || pathname.startsWith(`${item.path}/`) ? "page" : undefined} className={`${styles.navLink} ${pathname === item.path || pathname.startsWith(`${item.path}/`) ? styles.activeLink : ""}`} href={item.path} onClick={() => setMobileOpen(false)}>
+                      <NavIcon name={item.icon} />{item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </nav>
         <div className={styles.sidebarFooter}><span><i aria-hidden="true" className={styles.mockDot} />{strings.common.mockMode}</span></div>
       </aside>

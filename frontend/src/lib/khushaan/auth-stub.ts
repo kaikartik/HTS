@@ -38,6 +38,10 @@ export function canAccessConsole(role: Role): boolean {
   return role === "Supervisor" || role === "Admin";
 }
 
+export function canAccessAdmin(role: "Supervisor" | "Admin"): boolean {
+  return role === "Admin";
+}
+
 export function useCurrentUser(): {
   user: User;
   role: "Supervisor" | "Admin";
